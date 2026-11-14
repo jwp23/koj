@@ -1,0 +1,41 @@
+# Semgrep static analysis via the official semgrep/semgrep container. Results
+# are published to Semgrep Cloud Platform and uploaded to GitHub's Security tab.
+name: Semgrep
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  schedule:
+    - cron: '23 5 * * 0'
+
+permissions:
+  contents: read
+
+jobs:
+  semgrep:
+    name: Scan
+    # Dependabot runs don't receive Actions secrets, so the scan can't authenticate.
+    if: github.actor != 'dependabot[bot]'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read # for actions/checkout to fetch code
+      security-events: write # for upload-sarif to publish results
+    container:
+      image: semgrep/semgrep:1.184.0@sha256:cc1b68266f267878b39739373ea9985b9a78e5d64497dd875c8de100b22695ed
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Run Semgrep
+        run: semgrep ci --sarif > semgrep.sarif
+        env:
+          SEMGREP_APP_TOKEN: ${{ secrets.SEMGREP_APP_TOKEN }}
+
+      - name: Upload SARIF file
+        uses: github/codeql-action/upload-sarif@33d7b85da1a04171e211befe2c739303b9a4c066 # v4
+        with:
+          sarif_file: semgrep.sarif
+        if: always()
