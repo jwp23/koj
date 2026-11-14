@@ -69,8 +69,8 @@ done
 [ -n "$booted" ] || echo "The emulator did not finish booting in 120 seconds. Stop it (see Stop the Emulator)." >&2
 ```
 
-The loop ends when Android has finished starting, which took 14 seconds when timed here and is
-usually about twenty. It gives up after 120 seconds, several times the normal boot, and prints
+The loop ends when Android has finished starting, which for a headless boot took 14 seconds when
+measured on the development machine, and usually takes about twenty. It gives up after 120 seconds, several times the normal boot, and prints
 what to do. Drop `-no-window` to watch the screen.
 
 `adb devices` lists the emulator as `emulator-5554	device` once it is usable. While it is still
@@ -99,8 +99,11 @@ push when nothing is connected.
 `adb` cannot reach, stop the process directly:
 
 ```sh
-pkill -f 'qemu-system.*-avd koj-api37'
+pkill -f '[q]emu-system.*-avd koj-api37'
 ```
+
+The first letter is bracketed so the pattern does not match the shell that runs the command, whose
+own command line contains the pattern.
 
 Check that nothing is left. This prints nothing and exits 1 when the emulator is gone:
 

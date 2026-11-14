@@ -26,7 +26,7 @@ commands from the section named below. Do not paraphrase them from memory.
    limit passes, stop it as "Stop the Emulator" describes for one that has not finished booting,
    and tell your human partner; a device check that did not run is not a pass, however urgent the push.
 3. Run the tests from "Run the Device Tests".
-4. Stop the emulator with the command in "Stop the Emulator", even if the tests failed, but only
+4. Stop the emulator as the "Stop the Emulator" section describes, even if the tests failed, but only
    after the last step that needs a device. The `pre-push` hook runs the tests again, so stopping
    before the push makes the hook fail with no device. Only stop an emulator you started; leave a
    phone alone.
