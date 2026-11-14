@@ -19,13 +19,16 @@ commands from the section named below. Do not paraphrase them from memory.
 
 ## Steps
 
-1. Check whether a device is already connected (the "Start the Emulator" section explains how
-   `adb devices` reports one). If one is `device`, skip to step 3.
+1. Check whether a device is already connected (the "Start the Emulator" section shows how
+   connected devices are listed). If one is listed as `device`, skip to step 3.
 2. If the emulator or SDK is missing, follow "One-Time Setup" in the document. Otherwise follow
-   "Start the Emulator" and wait for it to finish booting.
+   "Start the Emulator" and wait for it to finish booting. If it never finishes, stop it and
+   tell your human partner; a device check that did not run is not a pass, however urgent the push.
 3. Run the tests from "Run the Device Tests".
-4. Stop the emulator with the command in "Stop the Emulator", even if the tests failed. Only
-   stop an emulator you started; leave a phone alone.
+4. Stop the emulator with the command in "Stop the Emulator", even if the tests failed, but only
+   after the last step that needs a device. The `pre-push` hook runs the tests again, so stopping
+   before the push makes the hook fail with no device. Only stop an emulator you started; leave a
+   phone alone.
 
 ## What a pass looks like
 
@@ -39,5 +42,5 @@ result of the manual lock-screen check when the change affects it.
 
 ## Cleanup
 
-Leave no emulator process running when you finish. Confirm with `adb devices` that no emulator
-you started remains listed.
+Leave no emulator process running when you finish. Check the device listing described in
+"Start the Emulator" and confirm no emulator you started remains in it.
