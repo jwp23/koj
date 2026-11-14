@@ -20,6 +20,9 @@ Locking the tooling classpaths as well was tried and rejected. The Android Gradl
 and test tooling pull in libraries with more than a hundred published advisories. None of that
 code is compiled into or shipped with the app, the project cannot change those versions, and the
 audit would fail from the first commit. Those versions are pinned by the plugin versions instead.
+The dependency submission to GitHub, which feeds Dependabot alerts and dependency review, is limited
+to the shipped runtime classpaths for the same reason; checksum verification of tooling artifacts is
+deliberately left to a separate decision.
 
 Gradle's dependency verification (`verification-metadata.xml`) is not used. Dependabot cannot
 update that file, so every dependency pull request would fail until someone regenerated it by

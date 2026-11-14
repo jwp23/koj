@@ -24,3 +24,10 @@ jobs:
           java-version: 25
 
       - uses: gradle/actions/dependency-submission@8da46b539cd8fe6ab27ca75128919a18d757604c # v6.4.1
+        with:
+          # Submit only what ships: the app's release runtime classpath and the core module's
+          # runtime classpath. The filter is a full-match, case-sensitive regular expression on
+          # the configuration where a dependency is resolved, so it excludes debug, test,
+          # androidTest, lint, annotation processor, compiler plugin, and buildscript classpaths.
+          # Those carry build tooling that is not shipped, and Dependabot would raise alerts on it.
+          dependency-graph-include-configurations: releaseRuntimeClasspath|runtimeClasspath
