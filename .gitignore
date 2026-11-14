@@ -5,3 +5,12 @@
 .beads-credential-key
 .beads/proxieddb/
 *.gate.lock*
+
+# Personal Claude Code settings (permissions, local hooks)
+.claude/settings.local.json
+
+# Git worktrees (isolated workspaces)
+.worktrees/
+
+# Subagent-driven development scratch workspace
+.joe-bag-of-tricks/
