@@ -14,3 +14,6 @@
 
 # Subagent-driven development scratch workspace
 .joe-bag-of-tricks/
+
+# Local SDK location (machine-specific)
+local.properties
