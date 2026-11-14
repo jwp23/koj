@@ -1,0 +1,4 @@
+#!/usr/bin/env sh
+# Run the device tests before a push that changes the app module.
+# Enable with: scripts/setup-hooks.sh
+exec "$(git rev-parse --show-toplevel)/scripts/pre-push-checks.sh" "$@"
