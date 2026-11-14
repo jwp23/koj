@@ -25,6 +25,12 @@ updates:
         update-types:
           - "minor"
           - "patch"
+    # Gradle and the Android Gradle Plugin versions must follow Kotlin's
+    # compatibility table, which Dependabot does not consult. Bump them by
+    # hand with Kotlin; see docs/decisions/build-toolchain-versions.md.
+    ignore:
+      - dependency-name: "gradle-wrapper"
+      - dependency-name: "com.android.*"
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
