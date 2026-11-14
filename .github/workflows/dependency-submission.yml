@@ -1,5 +1,5 @@
-# Send the resolved Gradle dependency graph to GitHub, so Dependabot alerts and
-# pull request dependency review can see transitive dependencies.
+# Send the resolved Gradle dependency graph to GitHub, so Dependabot alerts can
+# see transitive dependencies.
 name: Dependency Submission
 
 on:
