@@ -146,6 +146,73 @@ else
     fail "deleting a remote branch needs no device: $output"
 fi
 
+new_repo rename-out-of-app
+commit_file app/src/main/res/ic_launcher.xml
+git checkout -q -b feat/move
+mkdir -p core && git mv app/src/main/res/ic_launcher.xml core/ic_launcher.xml
+git commit -q -m "refactor: move launcher icon"
+git update-ref refs/remotes/origin/main "$(git rev-parse HEAD~1)"
+with_sdk 'List of devices attached\n\n'
+if output=$(push_branch); then
+    fail "moving a file out of the app module is blocked without a device"
+elif printf '%s' "$output" | grep -q "pre-push: no emulator or device is connected"; then
+    pass "moving a file out of the app module is blocked without a device"
+else
+    fail "moving a file out of the app module is blocked without a device: $output"
+fi
+
+new_repo non-ascii-path
+commit_file "app/src/main/kotlin/Caf$(printf '\303\251').kt"
+with_sdk 'List of devices attached\n\n'
+if output=$(push_branch); then
+    fail "an app file with a non-ASCII name is blocked without a device"
+elif printf '%s' "$output" | grep -q "pre-push: no emulator or device is connected"; then
+    pass "an app file with a non-ASCII name is blocked without a device"
+else
+    fail "an app file with a non-ASCII name is blocked without a device: $output"
+fi
+
+new_repo special-char-path
+commit_file "app/src/main/kotlin/tab$(printf '\t')name.kt"
+with_sdk 'List of devices attached\n\n'
+if output=$(push_branch); then
+    fail "an app file with a tab in its name is blocked without a device"
+else
+    pass "an app file with a tab in its name is blocked without a device"
+fi
+
+new_repo non-executable-rule
+commit_file docs/notes.md
+chmod -x scripts/changes-need-device-tests.sh
+if output=$(push_branch); then
+    fail "a rule script that cannot run blocks the push"
+elif printf '%s' "$output" | grep -q "pre-push: could not decide whether device tests are needed"; then
+    pass "a rule script that cannot run blocks the push"
+else
+    fail "a rule script that cannot run blocks the push: $output"
+fi
+
+new_repo failing-rule
+commit_file docs/notes.md
+printf '#!/bin/sh\nexit 2\n' > scripts/changes-need-device-tests.sh
+if output=$(push_branch); then
+    fail "a rule script that fails unexpectedly blocks the push"
+elif printf '%s' "$output" | grep -q "pre-push: could not decide whether device tests are needed"; then
+    pass "a rule script that fails unexpectedly blocks the push"
+else
+    fail "a rule script that fails unexpectedly blocks the push: $output"
+fi
+
+new_repo failing-diff
+commit_file docs/notes.md
+if output=$(printf 'refs/heads/feat/change %s refs/heads/feat/change %s\n' \
+    "$(git rev-parse HEAD | tr '0-9a-f' '1')" "$(git rev-parse HEAD | tr '0-9a-f' '0')" |
+    env -u ANDROID_HOME scripts/pre-push-checks.sh origin 2>&1); then
+    fail "a failing git diff blocks the push"
+else
+    pass "a failing git diff blocks the push"
+fi
+
 if [ "$failures" -ne 0 ]; then
     printf '\n%s test(s) failed\n' "$failures" >&2
     exit 1
