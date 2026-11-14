@@ -19,5 +19,6 @@ so 25, a long-term support release, is the newest one worth pinning.
 
 The table: https://kotlinlang.org/docs/gradle-configure-project.html#apply-the-plugin
 
-Dependabot proposes upgrades without consulting the table. Check a proposed Kotlin, Gradle, or
-Android Gradle Plugin bump against it before merging.
+Dependabot does not consult the table, so `.github/dependabot.yml` tells it to ignore the Gradle
+wrapper and the Android Gradle Plugin. A Dependabot PR for Kotlin is the trigger to read the
+table and bump Kotlin, Gradle, and the Android Gradle Plugin together by hand.
