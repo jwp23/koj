@@ -96,7 +96,9 @@ Formats and numbering: `docs/decision-recording.md`.
 - Commit messages are a single Conventional Commits line — no body, no footer.
 - Pull request titles follow the same convention. Merges are squashed, so the title becomes the
   commit subject on `main`. CI rejects a title that does not conform.
-- Commit the version catalog and the Gradle wrapper.
+- Commit the version catalog, the Gradle wrapper, and the dependency lockfiles. After changing a
+  dependency, regenerate the lockfiles with
+  `./gradlew :app:dependencies :core:dependencies --write-locks` and commit them with the change.
 - Larger changes use git worktrees in `.worktrees/`.
 - Make the smallest reasonable change that achieves the outcome.
 - NEVER discard or rewrite an existing implementation without asking first.
@@ -105,11 +107,15 @@ Formats and numbering: `docs/decision-recording.md`.
 
 `scripts/setup-hooks.sh` enables the committed hooks.
 
-- `pre-commit` scans staged changes for secrets, then runs format, lint, the dependency audit,
-  and `./gradlew test`. A missing secrets scanner blocks the commit.
+- `pre-commit` scans staged changes for secrets with `betterleaks`, then runs
+  `scripts/check-format.sh` (ktfmt), `scripts/audit-dependencies.sh` (osv-scanner over the
+  lockfiles), and `./gradlew test lint`. A missing tool blocks the commit;
+  `scripts/install-check-tools.sh` installs ktfmt and osv-scanner.
 - `commit-msg` checks the commit convention.
-- `pre-push` runs `./gradlew connectedAndroidTest` when the push touches storage, screens, or
-  notifications, and blocks if no emulator or device is connected.
+- `pre-push` runs `./gradlew connectedAndroidTest` when the push changes anything under `app/`,
+  and blocks if no emulator or device is connected.
+
+Fix formatting with `ktfmt --kotlinlang-style <file>`.
 
 NEVER skip, evade, or disable a hook.
 
