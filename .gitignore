@@ -6,7 +6,7 @@
 .beads/proxieddb/
 *.gate.lock*
 
-# Personal Claude Code settings (permissions, local hooks)
+# Personal Claude Code settings (permissions)
 .claude/settings.local.json
 
 # Git worktrees (isolated workspaces)
