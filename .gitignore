@@ -17,3 +17,8 @@
 
 # Local SDK location (machine-specific)
 local.properties
+
+# Gradle and Android build output
+build/
+.gradle/
+.kotlin/
