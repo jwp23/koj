@@ -40,6 +40,20 @@ sonar {
             "sonar.coverage.exclusions",
             "app/src/main/kotlin/io/github/jwp23/koj/MainActivity.kt",
         )
+        property("sonar.issue.ignore.multicriteria", "e1,e2")
+        // Ignores kotlin:S6474 (dependencies not verified, no verification-metadata.xml). The
+        // finding is accurate but the risk is accepted: see
+        // docs/decisions/dependency-audit-with-osv-scanner.md. It is a project-level issue with
+        // no file, so no narrower pattern than all files is known; whether this entry matches it
+        // is unconfirmed.
+        property("sonar.issue.ignore.multicriteria.e1.ruleKey", "kotlin:S6474")
+        property("sonar.issue.ignore.multicriteria.e1.resourceKey", "**/*")
+        // Ignores text:S8569 on the root build file (lock file not found beside it). False
+        // positive: strict locking is on and the lockfiles are committed per module, while the
+        // rule only looks beside the root build file, where Gradle generates none. See
+        // docs/decisions/dependency-audit-with-osv-scanner.md.
+        property("sonar.issue.ignore.multicriteria.e2.ruleKey", "text:S8569")
+        property("sonar.issue.ignore.multicriteria.e2.resourceKey", "build.gradle.kts")
     }
 }
 
