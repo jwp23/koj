@@ -58,13 +58,20 @@ The first build downloads the SDK build tools it needs.
 sdk="$HOME/Android/Sdk"
 "$sdk/emulator/emulator" -avd koj-api37 -no-window -no-audio -no-boot-anim -no-snapshot \
     -gpu swiftshader_indirect > /dev/null 2>&1 &
-until [ "$("$sdk/platform-tools/adb" shell getprop sys.boot_completed 2>/dev/null | tr -d '\r')" = 1 ]; do
+booted=
+for _ in $(seq 120); do
+    if [ "$("$sdk/platform-tools/adb" shell getprop sys.boot_completed 2>/dev/null | tr -d '\r')" = 1 ]; then
+        booted=1
+        break
+    fi
     sleep 1
 done
+[ -n "$booted" ] || echo "The emulator did not finish booting in 120 seconds. Stop it (see Stop the Emulator)." >&2
 ```
 
-The loop ends when Android has finished starting, which takes about twenty seconds. Drop
-`-no-window` to watch the screen.
+The loop ends when Android has finished starting, which took 14 seconds when timed here and is
+usually about twenty. It gives up after 120 seconds, several times the normal boot, and prints
+what to do. Drop `-no-window` to watch the screen.
 
 `adb devices` lists the emulator as `emulator-5554	device` once it is usable. While it is still
 starting it is listed as `offline`.
@@ -86,4 +93,17 @@ push when nothing is connected.
 
 ```sh
 "$HOME/Android/Sdk/platform-tools/adb" -s emulator-5554 emu kill
+```
+
+`emu kill` needs `adb` to see the emulator. For one that is still starting, or hung, and that
+`adb` cannot reach, stop the process directly:
+
+```sh
+pkill -f 'qemu-system.*-avd koj-api37'
+```
+
+Check that nothing is left. This prints nothing and exits 1 when the emulator is gone:
+
+```sh
+pgrep -a qemu
 ```
