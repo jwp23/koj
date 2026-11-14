@@ -3,7 +3,9 @@
 Decision: Dependencies are audited for known vulnerabilities by osv-scanner reading committed
 Gradle lockfiles. Dependency locking is strict and covers every compile and runtime classpath of
 both modules, including test classpaths. It does not cover the build tooling's own classpaths
-(the lint tool, the device test platform, Gradle plugins). After any dependency change the
+(the lint tool, the device test platform, Gradle plugins). The tracked `settings-gradle.lockfile`
+holds no dependency coordinates, only an `empty=` marker for the version catalog, so it is neither
+audited nor rewritten by the regenerate command. After any dependency change the
 lockfiles are regenerated with
 `./gradlew :app:dependencies :core:dependencies --write-locks`. In CI, GitHub's dependency review
 also checks each pull request.
