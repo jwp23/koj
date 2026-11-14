@@ -36,5 +36,9 @@ sonar {
     }
 }
 
+// The sonar plugin orders its analysis after test and compile tasks but not after Kover,
+// so without this the analysis can read the coverage report before it exists.
+tasks.named("sonar") { dependsOn(tasks.named("koverXmlReport")) }
+
 // The build runs on a JDK the developer has installed; Gradle never downloads one.
 tasks.updateDaemonJvm { toolchainDownloadUrls.empty() }
