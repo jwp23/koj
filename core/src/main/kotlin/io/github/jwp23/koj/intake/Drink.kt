@@ -34,4 +34,12 @@ data class Drink(
             "Default duration must not be negative, was $defaultDuration"
         }
     }
+
+    /** The amounts dosed by this drink. */
+    val taken: Amounts
+        get() = Amounts(caffeineMg, theanineMg)
 }
+
+/** The amounts dosed by all of [drinks] together. */
+fun taken(drinks: List<Drink>): Amounts =
+    Amounts(drinks.sumOf { it.caffeineMg }, drinks.sumOf { it.theanineMg })
