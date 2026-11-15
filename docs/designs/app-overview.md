@@ -70,8 +70,8 @@ every past day.
 - Check-in markers on the time axis. Tapping one shows its ratings.
 - A projection from now to bedtime, labelled with the caffeine remaining then.
 - A day is the local calendar day. Its graph runs from the morning time to bedtime, and widens
-  to include any drink, any check-in, and the current time that fall outside that range. Drinks
-  from earlier days still count towards the lines.
+  to include any drink or check-in on that day that falls outside that range, and, for today, the
+  current time. Drinks from earlier days still count towards the lines.
 
 The taken ratio (L-theanine to caffeine, as dosed) appears on each drink and each day. The
 in-body ratio is not shown as a number; the two lines show it.

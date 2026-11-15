@@ -30,3 +30,7 @@ exercise only in part.
 `./gradlew createDebugAndroidTestCoverageReport` runs the device tests and writes
 `app/build/reports/coverage/androidTest/debug/connected/report.xml` in JaCoCo's format. When
 device tests run in CI, pass that report to SonarQube beside Kover's and remove the exclusion.
+
+Status: not yet in the build. The exclusion in `build.gradle.kts` still covers only
+`MainActivity.kt`, and the pre-push hook runs the device tests without comparing coverage to 80
+percent.
