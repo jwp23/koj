@@ -12,8 +12,7 @@ object DefaultKinetics {
             // "Caffeine is rapidly and completely absorbed in humans, with 99 percent being
             // absorbed within 45 minutes of ingestion." With first-order absorption, 99 percent
             // absorbed means 1 percent left, which takes log2(100) = 6.64 half-lives, so one
-            // absorption half-life is 45 / 6.64 = 6.8 minutes, rounded to 7. This is for a
-            // drink; capsules are absorbed several times more slowly.
+            // absorption half-life is 45 / 6.64 = 6.8 minutes, rounded to 7.
             // Institute of Medicine (2001), Caffeine for the Sustainment of Mental Task
             // Performance, chapter 2. https://www.ncbi.nlm.nih.gov/books/NBK223808/
             absorptionHalfLife = Duration.ofMinutes(7),
