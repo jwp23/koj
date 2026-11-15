@@ -38,7 +38,7 @@ if ! scripts/audit-dependencies.sh; then
     exit 1
 fi
 
-if ! ./gradlew --quiet test lint; then
+if ! ./gradlew --quiet --no-configuration-cache test lint; then
     echo >&2 "pre-commit: tests or lint failed."
     exit 1
 fi

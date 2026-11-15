@@ -22,3 +22,28 @@ The table: https://kotlinlang.org/docs/gradle-configure-project.html#apply-the-p
 Dependabot does not consult the table, so `.github/dependabot.yml` tells it to ignore the Gradle
 wrapper and the Android Gradle Plugin. A Dependabot PR for Kotlin is the trigger to read the
 table and bump Kotlin, Gradle, and the Android Gradle Plugin together by hand.
+
+## Guard against pairings outside the table
+
+`gradle.properties` sets `org.gradle.warning.mode=fail`, so any Gradle warning fails the build.
+Measured on 2026-11-14 against Kotlin 2.4.21, whose table row allows Gradle up to 9.7.0 and the
+Android Gradle Plugin up to 9.3.1:
+
+- Gradle 9.8.2 with AGP 9.3.1 logs a Gradle deprecation warning at configuration
+  (`Configuration.setVisible(boolean)`). With the setting the build fails; without it the build
+  passes.
+- Gradle 9.7.0 with AGP 9.5.1 logs no Gradle warning, so the setting does not catch it. The
+  `lint` task fails instead: the `androidx.lifecycle` lint checks reference Kotlin APIs the newer
+  lint does not have (`ObsoleteLintCustomCheck`). That failure comes from the lint gate that
+  already runs in CI and the pre-commit hook, not from this setting.
+- The pinned versions build with no warnings, so the setting does not fail the current build.
+
+Limits:
+
+- A reused configuration cache entry does not replay configuration-time warnings. A build that
+  failed because of a warning stores an entry, and the next build reuses it and passes. The
+  pre-commit hook therefore runs Gradle with `--no-configuration-cache`, which cost about 0.25
+  seconds per run on this project when measured. CI starts without an entry. A plain `./gradlew`
+  run by hand can still reuse a stale entry.
+- Any Gradle warning fails the build, not only toolchain ones. A plugin update that adds a
+  deprecation warning fails CI until it is fixed or reverted.
