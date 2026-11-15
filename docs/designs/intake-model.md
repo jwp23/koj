@@ -28,6 +28,7 @@ half-life varies widely between people, so the user is expected to adjust it.
 - **Taken ratio** — L-theanine dosed divided by caffeine dosed, per drink and per day.
 - **In-body ratio** — L-theanine in the body divided by caffeine in the body at one moment.
   L-theanine clears much faster than caffeine, so this falls through the day.
+- Both ratios are null when the caffeine amount is zero.
 
 ## Limits
 
