@@ -43,7 +43,7 @@ sonar {
         property("sonar.issue.ignore.multicriteria", "e1")
         // kotlin:S6474 (no verification-metadata.xml) is deliberately not configured here: it is
         // a project-level issue with no file, which this file-path based setting cannot match. The
-        // decision is in docs/decisions/dependency-audit-with-osv-scanner.md and the issue is
+        // decision is in docs/decisions/gradle-dependency-verification-not-used.md and the issue is
         // accepted in the SonarCloud project.
         // Ignores text:S8569 on the root build file (lock file not found beside it). False
         // positive: strict locking is on and the lockfiles are committed per module, while the
