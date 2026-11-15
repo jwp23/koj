@@ -21,11 +21,9 @@ and test tooling pull in libraries with more than a hundred published advisories
 code is compiled into or shipped with the app, the project cannot change those versions, and the
 audit would fail from the first commit. Those versions are pinned by the plugin versions instead.
 The dependency submission to GitHub, which feeds Dependabot alerts, is limited
-to the shipped runtime classpaths for the same reason; checksum verification of tooling artifacts is
-deliberately left to a separate decision.
+to the shipped runtime classpaths for the same reason.
 
-Gradle's dependency verification (`verification-metadata.xml`) is not used. Dependabot cannot
-update that file, so every dependency pull request would fail until someone regenerated it by
-hand.
+Gradle's dependency verification (`verification-metadata.xml`) is not used; see
+[gradle-dependency-verification-not-used.md](gradle-dependency-verification-not-used.md).
 
 Checked 2026-11-14.
