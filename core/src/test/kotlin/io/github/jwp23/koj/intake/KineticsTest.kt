@@ -69,6 +69,43 @@ class KineticsTest {
         assertEquals("Elimination half-life must be positive, was PT-1M", error.message)
     }
 
+    @Test
+    fun halfLifeBelowOneMillisecondIsRejected() {
+        val error =
+            assertThrows(IllegalArgumentException::class.java) {
+                Kinetics(Duration.ofNanos(1), Duration.ofMinutes(20))
+            }
+        assertEquals(
+            "Absorption half-life must be at least one millisecond, was PT0.000000001S",
+            error.message,
+        )
+    }
+
+    @Test
+    fun eliminationHalfLifeBelowOneMillisecondIsRejected() {
+        val error =
+            assertThrows(IllegalArgumentException::class.java) {
+                Kinetics(Duration.ofMinutes(10), Duration.ofNanos(1))
+            }
+        assertEquals(
+            "Elimination half-life must be at least one millisecond, was PT0.000000001S",
+            error.message,
+        )
+    }
+
+    @Test
+    fun halfLivesThatDifferByLessThanAMillisecondAreTreatedAsEqual() {
+        // Both half-lives are 20 minutes at millisecond resolution, so the amount follows the
+        // equal-half-life form, f(t) = ka * t * 2^(-t/20) with ka = ln2/20 per minute. At
+        // t = 20 minutes: f = ln2 * 0.5 = 0.34657359027997264.
+        val nearlyEqual = Kinetics(Duration.ofMinutes(20), Duration.ofMinutes(20).plusNanos(1))
+        assertEquals(
+            0.34657359027997264,
+            nearlyEqual.amountInBody(1.0, Duration.ofMinutes(20)),
+            TOLERANCE,
+        )
+    }
+
     private companion object {
         const val TOLERANCE = 1e-9
     }

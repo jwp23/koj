@@ -15,8 +15,14 @@ data class Kinetics(val absorptionHalfLife: Duration, val eliminationHalfLife: D
         require(absorptionHalfLife > Duration.ZERO) {
             "Absorption half-life must be positive, was $absorptionHalfLife"
         }
+        require(absorptionHalfLife.toMillis() > 0) {
+            "Absorption half-life must be at least one millisecond, was $absorptionHalfLife"
+        }
         require(eliminationHalfLife > Duration.ZERO) {
             "Elimination half-life must be positive, was $eliminationHalfLife"
+        }
+        require(eliminationHalfLife.toMillis() > 0) {
+            "Elimination half-life must be at least one millisecond, was $eliminationHalfLife"
         }
     }
 
@@ -30,7 +36,7 @@ data class Kinetics(val absorptionHalfLife: Duration, val eliminationHalfLife: D
         val absorptionRate = ln(2.0) / absorptionHalfLife.inMinutes()
         // The general formula divides by the difference between the two rates, so equal
         // half-lives need the form the formula approaches as the rates converge.
-        if (absorptionHalfLife == eliminationHalfLife) {
+        if (absorptionHalfLife.toMillis() == eliminationHalfLife.toMillis()) {
             return dose * absorptionRate * minutes * exp(-absorptionRate * minutes)
         }
         val eliminationRate = ln(2.0) / eliminationHalfLife.inMinutes()

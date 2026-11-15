@@ -19,6 +19,9 @@ class IntakeModel(
         require(sipDoseSpacing > Duration.ZERO) {
             "Sip dose spacing must be positive, was $sipDoseSpacing"
         }
+        require(sipDoseSpacing.toMillis() > 0) {
+            "Sip dose spacing must be at least one millisecond, was $sipDoseSpacing"
+        }
     }
 
     /**

@@ -189,6 +189,18 @@ class IntakeModelTest {
         assertEquals("Sip dose spacing must be positive, was PT0S", error.message)
     }
 
+    @Test
+    fun sipDoseSpacingBelowOneMillisecondIsRejected() {
+        val error =
+            assertThrows(IllegalArgumentException::class.java) {
+                IntakeModel(caffeine, theanine, sipDoseSpacing = Duration.ofNanos(1))
+            }
+        assertEquals(
+            "Sip dose spacing must be at least one millisecond, was PT0.000000001S",
+            error.message,
+        )
+    }
+
     private fun assertAmounts(
         caffeineMg: Double,
         theanineMg: Double,
