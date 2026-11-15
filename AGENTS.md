@@ -26,8 +26,9 @@ Do not add these without an accepted ADR first:
 
 ## Tech Stack
 
-Kotlin; Jetpack Compose; Room (SQLite); AlarmManager and WorkManager; kotlinx.serialization;
-JUnit 4, AndroidX Test, Compose UI Test; Gradle; GitHub Actions.
+Kotlin; Jetpack Compose; Navigation 3; AndroidX ViewModel; Room 3 (SQLite) with KSP; coroutines;
+AlarmManager and WorkManager; kotlinx.serialization; JUnit 4, AndroidX Test, Compose UI Test;
+Gradle; GitHub Actions.
 
 Versions live only in `gradle/libs.versions.toml`. The minimum Android version is set in the
 build file; do not add version checks or compatibility code beneath it.

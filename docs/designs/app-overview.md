@@ -31,7 +31,10 @@ and credentials are app data.
 
 - **Source** — name, caffeine per serving, L-theanine per serving, intake style (sipped or
   fast), default sipping duration, and an optional usual time of day. Either amount may be zero.
-  A source with both at zero records a supplement that is tracked as an event only.
+  A source with both at zero records a supplement that is tracked as an event only. Deleting a
+  source that has drinks archives it: it leaves the source list and the one-tap buttons, but its
+  record stays, so history still names it and drinks can still be grouped by source. A source
+  with no drinks is removed.
 - **Drink** — the source, the fraction of a serving, the start time, and the finish time, which
   is empty while a sipped drink is in progress. A drink keeps its own copy of the per-serving
   amounts, so editing a source never changes history.
@@ -39,7 +42,9 @@ and credentials are app data.
   kind of prompt that produced it. In-body amounts at a check-in are computed when needed, not
   stored, so they always reflect the current half-life settings.
 - **Settings** — half-lives and absorption times, the check-in schedule and daily cap, morning
-  time, evening quiet time, bedtime, and the backup folder.
+  time, evening quiet time, bedtime, the size of a sip, and the backup folder. A fresh install
+  starts with a morning time of 08:00, quiet from 20:00, bedtime at 21:00, and a sip of one tenth
+  of a serving.
 
 Times are stored as instants with their time zone, so travel and daylight saving do not shift
 history. Data is never pruned.
@@ -52,7 +57,7 @@ every past day.
 | Screen | Content |
 |--------|---------|
 | Today | Current in-body caffeine and L-theanine. The day's graph. One-tap buttons for sources. Drinks in progress, each with a Finish button. Warnings for denied notifications and stale backups. |
-| Log a drink | Opened when one tap is not enough: a different amount, "just a sip", or an earlier start time. |
+| Log a drink | Opened when one tap is not enough: a different amount, "just a sip", or an earlier start time. A sip records the fraction of a serving held in Settings. |
 | History | Past days with drinks, check-ins, and the graph. Any entry can be corrected or deleted. |
 | Sources | The editable source list. |
 | Settings | Everything under Settings above, plus the time of the last successful backup. |
@@ -64,6 +69,9 @@ every past day.
   finish for a sipped drink. Tapping one shows the source and amounts.
 - Check-in markers on the time axis. Tapping one shows its ratings.
 - A projection from now to bedtime, labelled with the caffeine remaining then.
+- A day is the local calendar day. Its graph runs from the morning time to bedtime, and widens
+  to include any drink, any check-in, and the current time that fall outside that range. Drinks
+  from earlier days still count towards the lines.
 
 The taken ratio (L-theanine to caffeine, as dosed) appears on each drink and each day. The
 in-body ratio is not shown as a number; the two lines show it.

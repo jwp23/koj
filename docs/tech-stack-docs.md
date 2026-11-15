@@ -27,7 +27,12 @@ https://kotlinlang.org/docs/gradle-configure-project.html#apply-the-plugin
 | Library | Documentation |
 |---------|---------------|
 | Jetpack Compose | https://developer.android.com/develop/ui/compose/documentation |
-| Room | https://developer.android.com/training/data-storage/room |
+| Navigation 3 | https://developer.android.com/guide/navigation/navigation-3 |
+| ViewModel | https://developer.android.com/topic/libraries/architecture/viewmodel |
+| Room 3 | https://developer.android.com/training/data-storage/room |
+| Room 3 release notes | https://developer.android.com/jetpack/androidx/releases/room3 |
+| KSP | https://kotlinlang.org/docs/ksp-overview.html |
+| Coroutines | https://kotlinlang.org/docs/coroutines-overview.html |
 | AlarmManager | https://developer.android.com/develop/background-work/services/alarms |
 | WorkManager | https://developer.android.com/develop/background-work/background-tasks/persistent |
 | Notifications | https://developer.android.com/develop/ui/views/notifications |
