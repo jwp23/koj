@@ -151,6 +151,22 @@ class IntakeModelTest {
     }
 
     @Test
+    fun sippedDrinkWithNoSippingTimeIsOneDoseAtItsStart() {
+        val drinks =
+            listOf(
+                Drink(
+                    caffeineMg = 100.0,
+                    theanineMg = 0.0,
+                    style = IntakeStyle.SIPPED,
+                    start = eight,
+                    finish = eight,
+                ),
+            )
+        // Zero sipping time is still one dose, at the start: 100 * c(20) = 100 * 0.5 = 50 mg
+        assertAmounts(50.0, 0.0, model.inBody(drinks, minutesAfterEight(20)))
+    }
+
+    @Test
     fun sourceWithNeitherSubstanceContributesNothing() {
         val drinks = listOf(fast(0.0, 0.0, eight), fast(100.0, 200.0, eight))
         // Only the second drink counts: the fast-drink amounts, 50 mg and 75 mg.
