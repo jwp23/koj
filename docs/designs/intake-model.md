@@ -28,14 +28,14 @@ half-life varies widely between people, so the user is expected to adjust it.
 - **Taken ratio** — L-theanine dosed divided by caffeine dosed, per drink and per day.
 - **In-body ratio** — L-theanine in the body divided by caffeine in the body at one moment.
   L-theanine clears much faster than caffeine, so this falls through the day.
+- Both ratios are null when the caffeine amount is zero.
 
 ## Limits
 
 - The result is an estimate from population averages, not a measurement.
 - Absorption starts at the moment of the dose. The delay of about ten minutes that studies of
   L-theanine report before absorption begins is not modelled, so its line peaks slightly early.
-- The default caffeine absorption time is for a drink. Capsules are absorbed several times more
-  slowly.
+- The default caffeine absorption half-life is for a drink.
 - The model treats equal amounts from different sources identically. Differences between
   sources appear in check-in ratings, not in the graph.
 - Sources with no caffeine and no L-theanine contribute nothing to the calculation. They exist
