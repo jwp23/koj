@@ -13,6 +13,7 @@ import io.github.jwp23.koj.graph.dayGraph
 import io.github.jwp23.koj.intake.IntakeStyle
 import io.github.jwp23.koj.record.CheckIn
 import io.github.jwp23.koj.record.LoggedDrink
+import io.github.jwp23.koj.record.PromptKind
 import io.github.jwp23.koj.record.Settings
 import io.github.jwp23.koj.record.Source
 import java.time.Duration
@@ -117,5 +118,24 @@ class DayGraphViewTest {
         composeRule
             .onNodeWithText("Taken: 0 mg caffeine, 0 mg L-theanine, ratio –")
             .assertIsDisplayed()
+    }
+
+    @Test
+    fun aCheckInIsMarkedAndItsRatingsOpen() {
+        val checkIn =
+            CheckIn(
+                at = at("11:00"),
+                zone = zone,
+                awake = 4,
+                focus = null,
+                calm = 2,
+                kind = PromptKind.FIXED_TIME,
+            )
+        show(checkIns = listOf(checkIn))
+        composeRule.onNodeWithContentDescription("Check-in at 11:00").performClick()
+        composeRule.onNodeWithText("Check-in at 11:00").assertIsDisplayed()
+        composeRule.onNodeWithText("Awake 4 · Focus – · Calm 2").assertIsDisplayed()
+        composeRule.onNodeWithText("Close").performClick()
+        composeRule.onAllNodesWithText("Awake 4 · Focus – · Calm 2").assertCountEquals(0)
     }
 }

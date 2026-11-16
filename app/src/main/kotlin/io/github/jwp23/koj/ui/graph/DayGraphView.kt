@@ -2,6 +2,7 @@ package io.github.jwp23.koj.ui.graph
 
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -39,6 +40,7 @@ import androidx.compose.ui.unit.dp
 import io.github.jwp23.koj.form.formatMg
 import io.github.jwp23.koj.form.formatRatio
 import io.github.jwp23.koj.form.formatTime
+import io.github.jwp23.koj.graph.CheckInMarker
 import io.github.jwp23.koj.graph.DayGraph
 import io.github.jwp23.koj.graph.GraphPoint
 import io.github.jwp23.koj.graph.IntakeMarker
@@ -73,6 +75,7 @@ fun DayGraphView(graph: DayGraph, zone: ZoneId, modifier: Modifier = Modifier) {
     val theanineColor = MaterialTheme.colorScheme.tertiary
     val baselineColor = MaterialTheme.colorScheme.outline
     var openDrink by remember { mutableStateOf<IntakeMarker?>(null) }
+    var openCheckIn by remember { mutableStateOf<CheckInMarker?>(null) }
     Column(modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(4.dp)) {
         Row(
             horizontalArrangement = Arrangement.spacedBy(16.dp),
@@ -106,6 +109,17 @@ fun DayGraphView(graph: DayGraph, zone: ZoneId, modifier: Modifier = Modifier) {
             for (marker in graph.intakeMarkers) {
                 IntakeMarkerTarget(marker, graph, spanWidth, zone) { openDrink = marker }
             }
+            for (marker in graph.checkInMarkers) {
+                CheckInMarkerTarget(
+                    marker,
+                    graph,
+                    spanWidth,
+                    zone,
+                    Modifier.align(Alignment.BottomStart),
+                ) {
+                    openCheckIn = marker
+                }
+            }
         }
         val taken = graph.taken
         Text(
@@ -115,6 +129,7 @@ fun DayGraphView(graph: DayGraph, zone: ZoneId, modifier: Modifier = Modifier) {
         )
     }
     openDrink?.let { DrinkDetails(it, zone, onClose = { openDrink = null }) }
+    openCheckIn?.let { CheckInDetails(it, zone, onClose = { openCheckIn = null }) }
 }
 
 /**
@@ -151,24 +166,75 @@ private fun IntakeMarkerTarget(
     }
 }
 
+/**
+ * A check-in's marker: a ring on the baseline, inside a touch target [TouchTarget] square whose
+ * centre is on the baseline.
+ */
+@Composable
+private fun CheckInMarkerTarget(
+    marker: CheckInMarker,
+    graph: DayGraph,
+    spanWidth: Dp,
+    zone: ZoneId,
+    modifier: Modifier,
+    onOpen: () -> Unit,
+) {
+    val color = MaterialTheme.colorScheme.onSurfaceVariant
+    Box(
+        modifier
+            .offset(x = spanWidth * graph.position(marker.at))
+            .size(TouchTarget)
+            .semantics { contentDescription = "Check-in at ${marker.at.timeIn(zone)}" }
+            .clickable(onClick = onOpen),
+        contentAlignment = Alignment.Center,
+    ) {
+        Box(Modifier.size(MarkSize).border(2.dp, color, CircleShape))
+    }
+}
+
 @Composable
 private fun DrinkDetails(marker: IntakeMarker, zone: ZoneId, onClose: () -> Unit) {
     val start = marker.start.timeIn(zone)
     val time = if (marker.end == marker.start) start else "$start to ${marker.end.timeIn(zone)}"
+    Details(
+        title = marker.sourceName,
+        lines =
+            listOf(
+                time,
+                "${formatMg(marker.taken.caffeineMg)} caffeine",
+                "${formatMg(marker.taken.theanineMg)} L-theanine",
+                "Taken ratio: ${formatRatio(marker.taken.theanineToCaffeineRatio)}",
+            ),
+        onClose = onClose,
+    )
+}
+
+@Composable
+private fun CheckInDetails(marker: CheckInMarker, zone: ZoneId, onClose: () -> Unit) {
+    Details(
+        title = "Check-in at ${marker.at.timeIn(zone)}",
+        lines =
+            listOf(
+                "Awake ${marker.awake.rating()} · Focus ${marker.focus.rating()} · " +
+                    "Calm ${marker.calm.rating()}",
+            ),
+        onClose = onClose,
+    )
+}
+
+/** A marker's details, one per line, until closed. */
+@Composable
+private fun Details(title: String, lines: List<String>, onClose: () -> Unit) {
     AlertDialog(
         onDismissRequest = onClose,
         confirmButton = { TextButton(onClick = onClose) { Text("Close") } },
-        title = { Text(marker.sourceName) },
-        text = {
-            Column {
-                Text(time)
-                Text("${formatMg(marker.taken.caffeineMg)} caffeine")
-                Text("${formatMg(marker.taken.theanineMg)} L-theanine")
-                Text("Taken ratio: ${formatRatio(marker.taken.theanineToCaffeineRatio)}")
-            }
-        },
+        title = { Text(title) },
+        text = { Column { lines.forEach { Text(it) } } },
     )
 }
+
+/** A rating as a number, or "–" when it was not given. */
+private fun Int?.rating(): String = this?.toString() ?: "–"
 
 /** This instant's time of day in [zone], as HH:mm. */
 private fun Instant.timeIn(zone: ZoneId): String = formatTime(atZone(zone).toLocalTime())
