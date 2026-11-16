@@ -25,6 +25,10 @@ data class EditSourceState(
 class EditSourceViewModel(private val sources: SourceStore, private val sourceId: Long?) :
     ViewModel() {
     private val mutableState = MutableStateFlow(EditSourceState())
+
+    /** True when adding a source; false when editing, even before the stored source is read. */
+    val isNew = sourceId == null
+
     val state: StateFlow<EditSourceState> = mutableState
 
     init {

@@ -171,4 +171,28 @@ class EditSourceScreenTest {
         waitFor { done }
         assertNull(stored().single().usualTime)
     }
+
+    @Test
+    fun aSourceThatHasNotLoadedShowsNoFormToTypeInto() {
+        show(sourceId = 999)
+        composeRule.onNodeWithText("Edit source").assertIsDisplayed()
+        composeRule.onAllNodesWithText("New source").assertCountEquals(0)
+        composeRule.onAllNodesWithText("Name").assertCountEquals(0)
+        composeRule.onAllNodesWithText("Save").assertCountEquals(0)
+    }
+
+    @Test
+    fun anExistingSourceIsCalledEditOnceLoaded() {
+        val id = storeGreenTea()
+        show(id)
+        waitForText("Green tea")
+        composeRule.onNodeWithText("Edit source").assertIsDisplayed()
+        composeRule.onAllNodesWithText("New source").assertCountEquals(0)
+    }
+
+    @Test
+    fun aNewSourceIsCalledNew() {
+        show()
+        composeRule.onNodeWithText("New source").assertIsDisplayed()
+    }
 }

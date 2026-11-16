@@ -10,6 +10,7 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
@@ -46,10 +47,14 @@ fun EditSourceScreen(model: EditSourceViewModel, onDone: () -> Unit) {
         verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         Text(
-            if (state.stored == null) "New source" else "Edit source",
+            if (model.isNew) "New source" else "Edit source",
             style = MaterialTheme.typography.headlineMedium,
             modifier = Modifier.semantics { heading() },
         )
+        if (!model.isNew && state.stored == null) {
+            CircularProgressIndicator()
+            return@Column
+        }
         FormField("Name", form.name, SourceField.NAME in state.errors, "Enter a name") {
             model.change(form.copy(name = it))
         }
