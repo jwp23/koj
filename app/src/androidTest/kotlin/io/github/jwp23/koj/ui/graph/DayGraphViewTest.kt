@@ -138,4 +138,30 @@ class DayGraphViewTest {
         composeRule.onNodeWithText("Close").performClick()
         composeRule.onAllNodesWithText("Awake 4 · Focus – · Calm 2").assertCountEquals(0)
     }
+
+    // 660 minutes after 100 mg: ka = ln2 / 7 = 0.099021; ke = ln2 / 300 = 0.0023105;
+    // ka / (ka - ke) = 1.023891; e^(-ke x 660) = 0.217638; 100 x 1.023891 x 0.217638 = 22.28.
+    @Test
+    fun bedtimeCaffeineIsLabelled() {
+        show(drinks = listOf(espressoAt("10:00")))
+        composeRule.onNodeWithText("At bedtime: 22 mg caffeine").assertIsDisplayed()
+    }
+
+    @Test
+    fun aDayThatIsOverHasNoBedtimeLabel() {
+        show(drinks = listOf(espressoAt("10:00")), now = Instant.parse("2026-03-12T00:00:00Z"))
+        composeRule
+            .onNodeWithContentDescription("Graph of caffeine and L-theanine in the body")
+            .assertIsDisplayed()
+        composeRule.onAllNodesWithText("At bedtime", substring = true).assertCountEquals(0)
+    }
+
+    // 100 + 30 = 130 mg caffeine; 0 + 20 = 20 mg L-theanine; 20 / 130 = 0.154.
+    @Test
+    fun theDaysIntakeIsTotalled() {
+        show(drinks = listOf(espressoAt("10:00"), greenTea))
+        composeRule
+            .onNodeWithText("Taken: 130 mg caffeine, 20 mg L-theanine, ratio 0.15")
+            .assertIsDisplayed()
+    }
 }

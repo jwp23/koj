@@ -105,6 +105,9 @@ fun DayGraphView(graph: DayGraph, zone: ZoneId, modifier: Modifier = Modifier) {
                 )
                 drawAmountLine(graph, graph.past, caffeineColor) { it.caffeineMg }
                 drawAmountLine(graph, graph.past, theanineColor) { it.theanineMg }
+                val dashes = PathEffect.dashPathEffect(floatArrayOf(4.dp.toPx(), 4.dp.toPx()))
+                drawAmountLine(graph, graph.projection, caffeineColor, dashes) { it.caffeineMg }
+                drawAmountLine(graph, graph.projection, theanineColor, dashes) { it.theanineMg }
             }
             for (marker in graph.intakeMarkers) {
                 IntakeMarkerTarget(marker, graph, spanWidth, zone) { openDrink = marker }
@@ -121,6 +124,7 @@ fun DayGraphView(graph: DayGraph, zone: ZoneId, modifier: Modifier = Modifier) {
                 }
             }
         }
+        graph.caffeineAtBedtimeMg?.let { Text("At bedtime: ${formatMg(it)} caffeine") }
         val taken = graph.taken
         Text(
             "Taken: ${formatMg(taken.caffeineMg)} caffeine, " +
