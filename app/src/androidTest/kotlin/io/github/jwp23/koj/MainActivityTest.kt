@@ -144,4 +144,21 @@ class MainActivityTest {
         }
         composeRule.onNodeWithText("Caffeine half-life (hours)").assertIsDisplayed()
     }
+
+    @Test
+    fun aSourceAddedInSourcesCanBeLoggedFromToday() {
+        composeRule.onNode(barItem("Sources")).performClick()
+        composeRule.onNodeWithText("Add source").performClick()
+        composeRule.onNodeWithText("Name").performTextInput("Mate")
+        composeRule.onNodeWithText("Save").performClick()
+        composeRule.waitUntil(5_000) {
+            composeRule.onAllNodesWithText("Mate").fetchSemanticsNodes().isNotEmpty()
+        }
+        composeRule.onNode(barItem("Today")).performClick()
+        composeRule.waitUntil(5_000) {
+            composeRule.onAllNodesWithText("Mate").fetchSemanticsNodes().isNotEmpty()
+        }
+        composeRule.onNodeWithText("Mate").performClick()
+        composeRule.onNodeWithText("Mate").assertIsDisplayed()
+    }
 }

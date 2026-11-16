@@ -27,6 +27,8 @@ import io.github.jwp23.koj.ui.sources.EditSourceScreen
 import io.github.jwp23.koj.ui.sources.EditSourceViewModel
 import io.github.jwp23.koj.ui.sources.SourcesScreen
 import io.github.jwp23.koj.ui.sources.SourcesViewModel
+import io.github.jwp23.koj.ui.today.TodayScreen
+import io.github.jwp23.koj.ui.today.TodayViewModel
 
 @Composable
 fun KojApp(container: AppContainer) {
@@ -57,7 +59,26 @@ fun KojApp(container: AppContainer) {
                     ),
                 entryProvider =
                     entryProvider {
-                        entry<Today> { Placeholder("Today") }
+                        entry<Today> {
+                            TodayScreen(
+                                viewModel(
+                                    factory =
+                                        viewModelFactory {
+                                            initializer {
+                                                TodayViewModel(
+                                                    container.sources,
+                                                    container.drinks,
+                                                    container.settings,
+                                                    container.clock,
+                                                )
+                                            }
+                                        },
+                                ),
+                                // Nothing opens yet: the Log a drink screen is a later task.
+                                onLogWithOptions = {},
+                                onOpenSources = { backStack.chooseBarDestination(Sources) },
+                            )
+                        }
                         entry<History> { Placeholder("History") }
                         entry<Sources> {
                             SourcesScreen(
