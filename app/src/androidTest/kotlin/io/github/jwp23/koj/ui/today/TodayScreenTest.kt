@@ -35,7 +35,6 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import org.junit.After
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertNull
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -116,8 +115,18 @@ class TodayScreenTest {
     }
 
     @Test
-    fun nothingIsKnownBeforeTheFirstRead() {
-        assertNull(newModel().state.value)
+    fun noAmountOrEmptyMessageIsShownBeforeTheFirstRead() {
+        saveSources()
+        // Ticks that never arrive keep the first values from arriving.
+        val model =
+            TodayViewModel(sourceStore, drinkStore, settingsStore, clock, MutableSharedFlow())
+        composeRule.setContent { TodayScreen(model, onLogWithOptions = {}, onOpenSources = {}) }
+        composeRule.waitForIdle()
+        composeRule.onNodeWithText("Today").assertIsDisplayed()
+        composeRule.onAllNodesWithText("Caffeine in body", substring = true).assertCountEquals(0)
+        composeRule.onAllNodesWithText("L-theanine in body", substring = true).assertCountEquals(0)
+        composeRule.onAllNodesWithText("Add a source to start logging.").assertCountEquals(0)
+        composeRule.onAllNodesWithText("Espresso").assertCountEquals(0)
     }
 
     @Test
