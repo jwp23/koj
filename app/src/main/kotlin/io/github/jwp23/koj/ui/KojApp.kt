@@ -21,6 +21,8 @@ import androidx.navigation3.runtime.rememberNavBackStack
 import androidx.navigation3.runtime.rememberSaveableStateHolderNavEntryDecorator
 import androidx.navigation3.ui.NavDisplay
 import io.github.jwp23.koj.AppContainer
+import io.github.jwp23.koj.ui.settings.SettingsScreen
+import io.github.jwp23.koj.ui.settings.SettingsViewModel
 import io.github.jwp23.koj.ui.sources.EditSourceScreen
 import io.github.jwp23.koj.ui.sources.EditSourceViewModel
 import io.github.jwp23.koj.ui.sources.SourcesScreen
@@ -82,7 +84,16 @@ fun KojApp(container: AppContainer) {
                                 onDone = { backStack.removeIfOnTop(key) },
                             )
                         }
-                        entry<AppSettings> { Placeholder("Settings") }
+                        entry<AppSettings> {
+                            SettingsScreen(
+                                viewModel(
+                                    factory =
+                                        viewModelFactory {
+                                            initializer { SettingsViewModel(container.settings) }
+                                        },
+                                ),
+                            )
+                        }
                     },
             )
         }

@@ -132,4 +132,16 @@ class MainActivityTest {
     @Test fun aSourceCanBeAddedFromTheSourcesTab() = addSourceToAnEmptyList("Mate")
 
     @Test fun aSourceAddedByAnotherTestIsNotListed() = addSourceToAnEmptyList("Chai")
+
+    @Test
+    fun settingsAreReachedFromTheSettingsTab() {
+        composeRule.onNode(barItem("Settings")).performClick()
+        composeRule.waitUntil(5_000) {
+            composeRule
+                .onAllNodesWithText("Caffeine half-life (hours)")
+                .fetchSemanticsNodes()
+                .isNotEmpty()
+        }
+        composeRule.onNodeWithText("Caffeine half-life (hours)").assertIsDisplayed()
+    }
 }
