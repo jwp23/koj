@@ -5,6 +5,9 @@ import io.github.jwp23.koj.record.Source
 import java.time.Duration
 import java.time.LocalTime
 
+/** The longest sipping time a source may have: a whole day. */
+const val MAX_SIPPING_MINUTES = 24L * 60
+
 /** The fields of [SourceForm] that can be wrong. */
 enum class SourceField {
     NAME,
@@ -54,7 +57,7 @@ data class SourceForm(
             .trim()
             .takeIf { it.all(Char::isAsciiDigit) }
             ?.toLongOrNull()
-            ?.takeIf { it >= 1 }
+            ?.takeIf { it in 1..MAX_SIPPING_MINUTES }
 }
 
 private fun Char.isAsciiDigit() = this in '0'..'9'

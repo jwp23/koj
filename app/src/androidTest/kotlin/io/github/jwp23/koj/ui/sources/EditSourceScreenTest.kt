@@ -112,7 +112,7 @@ class EditSourceScreenTest {
         composeRule.onNodeWithText("Sipping time (minutes)").assertIsDisplayed()
         type("Name", "Tea")
         composeRule.onNodeWithText("Save").performClick()
-        composeRule.onNodeWithText("Enter whole minutes, 1 or more").assertIsDisplayed()
+        composeRule.onNodeWithText("Enter whole minutes, 1 to 1440").assertIsDisplayed()
         assertTrue(stored().isEmpty())
     }
 

@@ -29,6 +29,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import io.github.jwp23.koj.form.MAX_SIPPING_MINUTES
 import io.github.jwp23.koj.form.SourceField
 import io.github.jwp23.koj.form.SourceForm
 import io.github.jwp23.koj.intake.IntakeStyle
@@ -76,7 +77,7 @@ fun EditSourceScreen(model: EditSourceViewModel, onDone: () -> Unit) {
                 "Sipping time (minutes)",
                 form.durationMinutes,
                 SourceField.DURATION in state.errors,
-                "Enter whole minutes, 1 or more",
+                "Enter whole minutes, 1 to $MAX_SIPPING_MINUTES",
                 KeyboardType.Number,
             ) {
                 model.change(form.copy(durationMinutes = it))

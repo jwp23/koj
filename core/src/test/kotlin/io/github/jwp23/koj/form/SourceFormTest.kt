@@ -145,4 +145,20 @@ class SourceFormTest {
         assertEquals("90", form.durationMinutes)
         assertEquals(source, form.toSource(source.id))
     }
+
+    @Test
+    fun aSippingTimeOfAWholeDayIsTheMostAllowed() {
+        // 24 hours * 60 minutes = 1440 minutes
+        val form = valid.copy(style = IntakeStyle.SIPPED, durationMinutes = "1440")
+        assertEquals(emptySet<SourceField>(), form.errors())
+        assertEquals(Duration.ofHours(24), form.toSource().defaultDuration)
+    }
+
+    @Test
+    fun aSippingTimeBeyondADayIsAnError() {
+        for (text in listOf("1441", "999999999999999999", "99999999999999999999999")) {
+            val form = valid.copy(style = IntakeStyle.SIPPED, durationMinutes = text)
+            assertEquals(text, setOf(SourceField.DURATION), form.errors())
+        }
+    }
 }
