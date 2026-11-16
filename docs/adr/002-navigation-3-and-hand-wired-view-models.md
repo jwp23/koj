@@ -27,7 +27,7 @@ Dependencies are wired by hand. The `Application` subclass owns one container ob
 the database and exposes the stores; each view model is created through `viewModelFactory` with
 what it needs from the container. There is no dependency-injection library.
 
-The dependencies this adds, to be pinned in `gradle/libs.versions.toml` when the screens are built: `navigation3-runtime`,
+The dependencies this adds, pinned in `gradle/libs.versions.toml`: `navigation3-runtime`,
 `navigation3-ui`, `lifecycle-viewmodel-navigation3`, `lifecycle-viewmodel-compose`,
 `lifecycle-runtime-compose`, `kotlinx-serialization-core`, and the Kotlin serialization compiler
 plugin, which `@Serializable` keys require.
