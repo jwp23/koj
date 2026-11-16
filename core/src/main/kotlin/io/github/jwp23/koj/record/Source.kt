@@ -2,7 +2,9 @@ package io.github.jwp23.koj.record
 
 import io.github.jwp23.koj.intake.IntakeStyle
 import java.time.Duration
+import java.time.Instant
 import java.time.LocalTime
+import java.time.ZoneId
 
 /**
  * Something the user drinks or takes, with what one serving contains.
@@ -36,4 +38,22 @@ data class Source(
             "A sipped source needs a default duration"
         }
     }
+
+    /**
+     * A drink of this source: [servings] of a serving, started at [start]. A fast drink finishes as
+     * it starts; a sipped drink is in progress until its finish is recorded.
+     */
+    fun logged(servings: Double, start: Instant, zone: ZoneId): LoggedDrink =
+        LoggedDrink(
+            sourceId = id,
+            sourceName = name,
+            servings = servings,
+            caffeineMgPerServing = caffeineMgPerServing,
+            theanineMgPerServing = theanineMgPerServing,
+            style = style,
+            defaultDuration = defaultDuration,
+            start = start,
+            zone = zone,
+            finish = if (style == IntakeStyle.FAST) start else null,
+        )
 }
