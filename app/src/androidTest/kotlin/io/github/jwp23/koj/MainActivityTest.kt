@@ -23,8 +23,15 @@ class MainActivityTest {
 
     private fun barItem(text: String) = hasText(text) and isSelectable()
 
-    private fun pressBack() {
-        composeRule.waitForIdle()
+    /**
+     * Presses back once the screen with heading [screen] is showing. NavDisplay enables its back
+     * handler in a side effect of the composition that shows a screen above Today, and this rule's
+     * clock composes only when the test waits on the UI, as asserting the heading does. Pressed
+     * before that composition, back finds the handler as the last composition left it: disabled
+     * after Today alone, so the activity leaves the app.
+     */
+    private fun pressBackFrom(screen: String) {
+        composeRule.onNode(heading(screen)).assertIsDisplayed()
         composeRule.activityRule.scenario.onActivity { it.onBackPressedDispatcher.onBackPressed() }
     }
 
@@ -46,7 +53,7 @@ class MainActivityTest {
     @Test
     fun backFromABarDestinationReturnsToToday() {
         composeRule.onNode(barItem("Sources")).performClick()
-        pressBack()
+        pressBackFrom("Sources")
         composeRule.onNode(heading("Today")).assertIsDisplayed()
     }
 
@@ -54,7 +61,7 @@ class MainActivityTest {
     fun choosingAnotherDestinationDoesNotStackThem() {
         composeRule.onNode(barItem("Sources")).performClick()
         composeRule.onNode(barItem("History")).performClick()
-        pressBack()
+        pressBackFrom("History")
         composeRule.onNode(heading("Today")).assertIsDisplayed()
     }
 
