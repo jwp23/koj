@@ -143,7 +143,7 @@ class DayGraphTest {
         // ka / (ka - ke) = 1.023891
         // e^(-ke x 660) = 0.217638; e^(-ka x 660) is negligible
         // 100 x 1.023891 x 0.217638 = 22.28
-        assertEquals(22.28, graph.caffeineAtBedtimeMg!!, 0.01)
+        assertEquals(22.28, graph.caffeineAtBedtimeMg, 0.01)
     }
 
     @Test
