@@ -141,6 +141,18 @@ class DrinkStoreTest {
     }
 
     @Test
+    fun savingAnEditedDrinkThatWasDeletedFails() = runTest {
+        val id = drinks.save(stored(espresso).logged(1.0, nine, utc))
+        val loaded = drinks.drink(id)!!
+        drinks.delete(loaded)
+
+        val failure = runCatching { drinks.save(loaded.copy(servings = 2.0)) }.exceptionOrNull()
+
+        assertTrue(failure is IllegalStateException)
+        assertNull(drinks.drink(id))
+    }
+
+    @Test
     fun aDeletedDrinkIsGone() = runTest {
         val id = drinks.save(stored(espresso).logged(1.0, nine, utc))
 

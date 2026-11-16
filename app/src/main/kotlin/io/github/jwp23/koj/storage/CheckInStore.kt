@@ -15,11 +15,14 @@ class CheckInStore(private val dao: CheckInDao) {
 
     suspend fun checkIn(id: Long): CheckIn? = dao.find(id)?.toCheckIn()
 
-    /** Stores a new check-in (id 0) or replaces the stored one. Returns its id. */
+    /**
+     * Stores a new check-in (id 0) or replaces the stored one. Returns its id. Throws if the
+     * check-in has an id but no stored check-in has it, such as one deleted since it was loaded.
+     */
     suspend fun save(checkIn: CheckIn): Long {
         val row = checkIn.toRow()
         if (checkIn.id == 0L) return dao.insert(row)
-        dao.update(row)
+        check(dao.update(row) > 0) { "No stored check-in has id ${checkIn.id}" }
         return checkIn.id
     }
 

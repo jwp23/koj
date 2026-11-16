@@ -37,6 +37,18 @@ class CheckInStoreTest {
         CheckIn(at = at, zone = auckland, awake = 4, kind = PromptKind.MORNING)
 
     @Test
+    fun savingAnEditedCheckInThatWasDeletedFails() = runTest {
+        val id = checkIns.save(checkInAt(nine))
+        val loaded = checkIns.checkIn(id)!!
+        checkIns.delete(loaded)
+
+        val failure = runCatching { checkIns.save(loaded.copy(awake = 2)) }.exceptionOrNull()
+
+        assertTrue(failure is IllegalStateException)
+        assertNull(checkIns.checkIn(id))
+    }
+
+    @Test
     fun aSavedCheckInCanBeReadBack() = runTest {
         val checkIn =
             CheckIn(

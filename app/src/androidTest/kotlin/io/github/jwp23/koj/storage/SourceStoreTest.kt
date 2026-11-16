@@ -92,10 +92,19 @@ class SourceStoreTest {
     @Test
     fun deletingASourceWithNoDrinksRemovesIt() = runTest {
         val id = store.save(greenTea())
+        val other = store.save(greenTea("Espresso"))
+        val drinks = DrinkStore(database.drinkDao())
+        val otherDrink =
+            store
+                .source(other)!!
+                .logged(1.0, Instant.parse("2026-03-10T09:00:00Z"), ZoneId.of("UTC"))
+        val otherDrinkId = drinks.save(otherDrink)
 
         store.delete(store.source(id)!!)
 
         assertNull(store.source(id))
+        assertEquals(false, store.source(other)?.archived)
+        assertEquals(otherDrink.copy(id = otherDrinkId), drinks.drink(otherDrinkId))
     }
 
     @Test
@@ -104,10 +113,17 @@ class SourceStoreTest {
         val source = store.source(id)!!
         val drinks = DrinkStore(database.drinkDao())
         drinks.save(source.logged(1.0, Instant.parse("2026-03-10T09:00:00Z"), ZoneId.of("UTC")))
+        val other = store.save(greenTea("Espresso"))
+        val otherDrink =
+            store
+                .source(other)!!
+                .logged(1.0, Instant.parse("2026-03-10T09:00:00Z"), ZoneId.of("UTC"))
+        val otherDrinkId = drinks.save(otherDrink)
 
         store.delete(source)
 
-        assertTrue(store.sources().first().isEmpty())
+        assertEquals(listOf("Espresso"), store.sources().first().map { it.name })
+        assertEquals(otherDrink.copy(id = otherDrinkId), drinks.drink(otherDrinkId))
         assertEquals(true, store.source(id)?.archived)
         assertEquals(listOf("Green tea"), drinks.drinks().first().map { it.sourceName })
     }

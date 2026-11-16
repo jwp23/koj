@@ -12,7 +12,8 @@ import kotlinx.coroutines.flow.Flow
 interface DrinkDao {
     @Insert suspend fun insert(row: DrinkRow): Long
 
-    @Update suspend fun update(row: DrinkRow)
+    /** Returns how many rows changed: 0 when no stored drink has the row's id. */
+    @Update suspend fun update(row: DrinkRow): Int
 
     @Delete suspend fun delete(row: DrinkRow)
 

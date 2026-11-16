@@ -19,11 +19,14 @@ class DrinkStore(private val dao: DrinkDao) {
 
     suspend fun drink(id: Long): LoggedDrink? = dao.find(id)?.toDrink()
 
-    /** Stores a new drink (id 0) or replaces the stored one. Returns its id. */
+    /**
+     * Stores a new drink (id 0) or replaces the stored one. Returns its id. Throws if the drink has
+     * an id but no stored drink has it, such as one deleted since it was loaded.
+     */
     suspend fun save(drink: LoggedDrink): Long {
         val row = drink.toRow()
         if (drink.id == 0L) return dao.insert(row)
-        dao.update(row)
+        check(dao.update(row) > 0) { "No stored drink has id ${drink.id}" }
         return drink.id
     }
 

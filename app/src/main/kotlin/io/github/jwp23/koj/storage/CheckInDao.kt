@@ -12,7 +12,8 @@ import kotlinx.coroutines.flow.Flow
 interface CheckInDao {
     @Insert suspend fun insert(row: CheckInRow): Long
 
-    @Update suspend fun update(row: CheckInRow)
+    /** Returns how many rows changed: 0 when no stored check-in has the row's id. */
+    @Update suspend fun update(row: CheckInRow): Int
 
     @Delete suspend fun delete(row: CheckInRow)
 
