@@ -22,6 +22,7 @@ import io.github.jwp23.koj.form.formatMg
 import io.github.jwp23.koj.form.formatTime
 import io.github.jwp23.koj.record.LoggedDrink
 import io.github.jwp23.koj.record.Source
+import io.github.jwp23.koj.ui.graph.DayGraphView
 
 @Composable
 fun TodayScreen(
@@ -44,6 +45,7 @@ fun TodayScreen(
         val loaded = state ?: return@LazyColumn
         item { Text("Caffeine in body: ${formatMg(loaded.inBody.caffeineMg)}") }
         item { Text("L-theanine in body: ${formatMg(loaded.inBody.theanineMg)}") }
+        item { DayGraphView(loaded.graph, loaded.zone) }
         if (loaded.sources.isEmpty()) {
             item { Text("Add a source to start logging.") }
             item { Button(onClick = onOpenSources) { Text("Sources") } }

@@ -70,6 +70,7 @@ fun KojApp(container: AppContainer) {
                                                 TodayViewModel(
                                                     container.sources,
                                                     container.drinks,
+                                                    container.checkIns,
                                                     container.settings,
                                                     container.clock,
                                                 )

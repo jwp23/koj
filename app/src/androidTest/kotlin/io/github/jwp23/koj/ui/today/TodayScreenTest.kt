@@ -6,6 +6,7 @@ import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.hasScrollAction
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.v2.createComposeRule
+import androidx.compose.ui.test.onAllNodesWithContentDescription
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
@@ -18,8 +19,11 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.github.jwp23.koj.DeviceZoneClock
 import io.github.jwp23.koj.intake.IntakeStyle
 import io.github.jwp23.koj.intake.Kinetics
+import io.github.jwp23.koj.record.CheckIn
+import io.github.jwp23.koj.record.PromptKind
 import io.github.jwp23.koj.record.Settings
 import io.github.jwp23.koj.record.Source
+import io.github.jwp23.koj.storage.CheckInStore
 import io.github.jwp23.koj.storage.DrinkStore
 import io.github.jwp23.koj.storage.KojDatabase
 import io.github.jwp23.koj.storage.SettingsStore
@@ -51,6 +55,7 @@ class TodayScreenTest {
             .build()
     private val sourceStore = SourceStore(database.sourceDao())
     private val drinkStore = DrinkStore(database.drinkDao())
+    private val checkInStore = CheckInStore(database.checkInDao())
     private val settingsStore = SettingsStore(database.settingsDao())
     private val clock = MutableClock(Instant.parse("2026-03-10T10:00:00Z"))
     private val ticks = MutableSharedFlow<Unit>(replay = 1).also { it.tryEmit(Unit) }
@@ -58,7 +63,7 @@ class TodayScreenTest {
     @After fun closeDatabase() = database.close()
 
     private fun newModel(modelClock: Clock = clock) =
-        TodayViewModel(sourceStore, drinkStore, settingsStore, modelClock, ticks)
+        TodayViewModel(sourceStore, drinkStore, checkInStore, settingsStore, modelClock, ticks)
 
     private fun show(
         onLogWithOptions: (Long) -> Unit = {},
@@ -102,6 +107,22 @@ class TodayScreenTest {
 
     private fun storedDrinks() = runBlocking { drinkStore.drinks().first() }
 
+    private fun waitForDescription(description: String) =
+        composeRule.waitUntil(5_000) {
+            composeRule
+                .onAllNodesWithContentDescription(description)
+                .fetchSemanticsNodes()
+                .isNotEmpty()
+        }
+
+    private fun logEspressoAtTen() {
+        saveSources()
+        show()
+        waitForText("Espresso")
+        composeRule.onNodeWithText("Espresso").performClick()
+        waitForADrink()
+    }
+
     private fun waitForADrink() = composeRule.waitUntil(5_000) { storedDrinks().isNotEmpty() }
 
     @Test
@@ -119,7 +140,14 @@ class TodayScreenTest {
         saveSources()
         // Ticks that never arrive keep the first values from arriving.
         val model =
-            TodayViewModel(sourceStore, drinkStore, settingsStore, clock, MutableSharedFlow())
+            TodayViewModel(
+                sourceStore,
+                drinkStore,
+                checkInStore,
+                settingsStore,
+                clock,
+                MutableSharedFlow(),
+            )
         composeRule.setContent { TodayScreen(model, onLogWithOptions = {}, onOpenSources = {}) }
         composeRule.waitForIdle()
         composeRule.onNodeWithText("Today").assertIsDisplayed()
@@ -127,6 +155,9 @@ class TodayScreenTest {
         composeRule.onAllNodesWithText("L-theanine in body", substring = true).assertCountEquals(0)
         composeRule.onAllNodesWithText("Add a source to start logging.").assertCountEquals(0)
         composeRule.onAllNodesWithText("Espresso").assertCountEquals(0)
+        composeRule
+            .onAllNodesWithContentDescription("Graph of caffeine and L-theanine in the body")
+            .assertCountEquals(0)
     }
 
     @Test
@@ -304,5 +335,61 @@ class TodayScreenTest {
         deviceZone = twoHoursEast
         ticks.tryEmit(Unit)
         waitForText("Green tea since 12:00")
+    }
+
+    @Test
+    fun loggingADrinkAddsItsMarker() {
+        logEspressoAtTen()
+        waitForDescription("Drink: Espresso at 10:00")
+    }
+
+    @Test
+    fun aBackDatedDrinkMovesItsMarker() {
+        logEspressoAtTen()
+        waitForDescription("Drink: Espresso at 10:00")
+        val halfPastEight = Instant.parse("2026-03-10T08:30:00Z")
+        runBlocking {
+            drinkStore.save(
+                storedDrinks().single().copy(start = halfPastEight, finish = halfPastEight),
+            )
+        }
+        waitForDescription("Drink: Espresso at 08:30")
+        composeRule
+            .onAllNodesWithContentDescription("Drink: Espresso at 10:00")
+            .assertCountEquals(0)
+    }
+
+    @Test
+    fun aCheckInAppearsOnTheGraph() {
+        show()
+        waitForText("Caffeine in body: 0 mg")
+        runBlocking {
+            checkInStore.save(
+                CheckIn(
+                    at = Instant.parse("2026-03-10T09:30:00Z"),
+                    zone = ZoneOffset.UTC,
+                    awake = 3,
+                    kind = PromptKind.FIXED_TIME,
+                ),
+            )
+        }
+        waitForDescription("Check-in at 09:30")
+    }
+
+    // 660 minutes from 10:00 to the 21:00 bedtime after 80 mg. ka = ln2 / 7 = 0.099021.
+    // Default: ke = ln2 / 300 = 0.0023105; ka / (ka - ke) = 1.023891; e^(-ke x 660) = 0.217638;
+    // 80 x 1.023891 x 0.217638 = 17.83.
+    // Changed: ke = ln2 / 150 = 0.0046210; ka / (ka - ke) = 1.048951; e^(-ke x 660) = 0.047366;
+    // 80 x 1.048951 x 0.047366 = 3.97.
+    @Test
+    fun bedtimeCaffeineFollowsTheHalfLife() {
+        logEspressoAtTen()
+        waitForText("At bedtime: 18 mg caffeine")
+        runBlocking {
+            settingsStore.save(
+                Settings(caffeine = Kinetics(Duration.ofMinutes(7), Duration.ofMinutes(150))),
+            )
+        }
+        waitForText("At bedtime: 4 mg caffeine")
     }
 }
