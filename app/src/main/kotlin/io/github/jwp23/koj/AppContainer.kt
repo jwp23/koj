@@ -23,7 +23,7 @@ class DeviceZoneClock(private val base: Clock, private val zone: () -> ZoneId) :
 
 /** Everything the screens share. Built once by the Application. */
 class AppContainer(
-    database: KojDatabase,
+    val database: KojDatabase,
     val clock: Clock = DeviceZoneClock(Clock.systemUTC(), ZoneId::systemDefault),
 ) {
     val sources = SourceStore(database.sourceDao())
