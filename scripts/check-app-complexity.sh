@@ -19,7 +19,7 @@
 set -eu
 
 report=${1:-}
-maximum=${2:-1000}
+maximum=${2:-4}
 
 if [ ! -r "$report" ]; then
     echo >&2 "app complexity: no report at '$report'. Run ./gradlew createDebugAndroidTestCoverageReport with an emulator connected."

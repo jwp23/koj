@@ -9,6 +9,8 @@
 # The push is blocked when the device tests are needed and no emulator or
 # device is connected to run them. It is also blocked when the device tests
 # cover less than the minimum line coverage of the app module's handwritten code.
+# It is also blocked when a view-model or store method is more complex than the
+# maximum in scripts/check-app-complexity.sh.
 set -eu
 
 remote=$1
@@ -77,3 +79,4 @@ if ! ./gradlew --quiet createDebugAndroidTestCoverageReport; then
 fi
 
 scripts/check-device-coverage.sh app/build/reports/coverage/androidTest/debug/connected/report.xml
+scripts/check-app-complexity.sh app/build/reports/coverage/androidTest/debug/connected/report.xml

@@ -95,7 +95,9 @@ To check how much of the app module the device tests cover, run this instead:
 Its HTML report is `app/build/reports/coverage/androidTest/debug/connected/index.html`.
 
 The `pre-push` hook runs this coverage form when a push changes anything under `app/`, and blocks
-the push when nothing is connected or when coverage is below 80 percent.
+the push when nothing is connected or when coverage is below 80 percent. It then runs
+`scripts/check-app-complexity.sh` on the same report and blocks the push when a view-model or store
+method is more complex than its maximum.
 
 ## Stop the Emulator
 

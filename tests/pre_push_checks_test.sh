@@ -30,7 +30,7 @@ new_repo() {
     git config user.name "Test Author"
     git config user.email "author@example.com"
     mkdir scripts
-    cp -f "$script_dir/pre-push-checks.sh" "$script_dir/changes-need-device-tests.sh" "$script_dir/check-device-coverage.sh" scripts/
+    cp -f "$script_dir/pre-push-checks.sh" "$script_dir/changes-need-device-tests.sh" "$script_dir/check-device-coverage.sh" "$script_dir/check-app-complexity.sh" scripts/
     printf 'notes\n' > README.md
     git add .
     git commit -q -m "chore: start"
@@ -46,15 +46,16 @@ commit_file() {
     git commit -q -m "feat: add $1"
 }
 
-# with_sdk <adb devices output> [missed] [covered] — an SDK whose adb prints the
-# given device list, and a Gradle wrapper that records its arguments, writes a
-# coverage report with the given line totals, and succeeds.
+# with_sdk <adb devices output> [missed] [covered] [complexity] — an SDK whose adb
+# prints the given device list, and a Gradle wrapper that records its arguments,
+# writes a coverage report with the given line totals and one view-model method
+# of the given complexity (default 1), and succeeds.
 with_sdk() {
     mkdir -p sdk/platform-tools
     printf '#!/bin/sh\nprintf "%%b" "%s"\n' "$1" > sdk/platform-tools/adb
     chmod +x sdk/platform-tools/adb
     printf 'sdk.dir=%s\n' "$PWD/sdk" > local.properties
-    report_xml=$(printf '<report name="debug"><package name="p"><sourcefile name="Screen.kt"><counter type="LINE" missed="%s" covered="%s"/></sourcefile></package></report>' "${2:-10}" "${3:-90}")
+    report_xml=$(printf '<report name="debug"><package name="p"><class name="p/TodayViewModel" sourcefilename="TodayViewModel.kt"><method name="finish" desc="()V" line="1"><counter type="COMPLEXITY" missed="0" covered="%s"/></method></class><sourcefile name="Screen.kt"><counter type="LINE" missed="%s" covered="%s"/></sourcefile></package></report>' "${4:-1}" "${2:-10}" "${3:-90}")
     cat > gradlew <<EOF
 #!/bin/sh
 echo "\$@" > gradle-was-called
@@ -136,6 +137,17 @@ if output=$(push_branch); then
     pass "device tests that cover enough allow the push"
 else
     fail "device tests that cover enough allow the push: $output"
+fi
+
+new_repo too-complex-view-model
+commit_file app/src/main/kotlin/Screen.kt
+with_sdk 'List of devices attached\nemulator-5554\tdevice\n\n' 10 90 99
+if output=$(push_branch); then
+    fail "a view model that is too complex blocks the push"
+elif printf '%s' "$output" | grep -q "app complexity:"; then
+    pass "a view model that is too complex blocks the push"
+else
+    fail "a view model that is too complex blocks the push: $output"
 fi
 
 new_repo failing-device-tests
