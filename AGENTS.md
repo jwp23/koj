@@ -115,8 +115,8 @@ Formats and numbering: `docs/decision-recording.md`.
   lockfiles), and `./gradlew test lint`. A missing tool blocks the commit;
   `scripts/install-check-tools.sh` installs ktfmt and osv-scanner.
 - `commit-msg` checks the commit convention.
-- `pre-push` runs `./gradlew connectedAndroidTest` when the push changes anything under `app/`,
-  and blocks if no emulator or device is connected.
+- `pre-push` runs `./gradlew createDebugAndroidTestCoverageReport` when the push changes anything under `app/`,
+  and blocks if no emulator or device is connected or if handwritten app code is below 80 percent line coverage.
 
 Fix formatting with `ktfmt --kotlinlang-style <file>`.
 

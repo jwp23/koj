@@ -30,7 +30,7 @@ new_repo() {
     git config user.name "Test Author"
     git config user.email "author@example.com"
     mkdir scripts
-    cp -f "$script_dir/pre-push-checks.sh" "$script_dir/changes-need-device-tests.sh" scripts/
+    cp -f "$script_dir/pre-push-checks.sh" "$script_dir/changes-need-device-tests.sh" "$script_dir/check-device-coverage.sh" scripts/
     printf 'notes\n' > README.md
     git add .
     git commit -q -m "chore: start"
@@ -46,14 +46,21 @@ commit_file() {
     git commit -q -m "feat: add $1"
 }
 
-# with_sdk <adb devices output> — an SDK whose adb prints the given device list,
-# and a Gradle wrapper that records its arguments and succeeds.
+# with_sdk <adb devices output> [missed] [covered] — an SDK whose adb prints the
+# given device list, and a Gradle wrapper that records its arguments, writes a
+# coverage report with the given line totals, and succeeds.
 with_sdk() {
     mkdir -p sdk/platform-tools
     printf '#!/bin/sh\nprintf "%%b" "%s"\n' "$1" > sdk/platform-tools/adb
     chmod +x sdk/platform-tools/adb
     printf 'sdk.dir=%s\n' "$PWD/sdk" > local.properties
-    printf '#!/bin/sh\necho "$@" > gradle-was-called\n' > gradlew
+    report_xml=$(printf '<report name="debug"><package name="p"><sourcefile name="Screen.kt"><counter type="LINE" missed="%s" covered="%s"/></sourcefile></package></report>' "${2:-10}" "${3:-90}")
+    cat > gradlew <<EOF
+#!/bin/sh
+echo "\$@" > gradle-was-called
+mkdir -p app/build/reports/coverage/androidTest/debug/connected
+printf '%s' '$report_xml' > app/build/reports/coverage/androidTest/debug/connected/report.xml
+EOF
     chmod +x gradlew
 }
 
@@ -105,10 +112,30 @@ fi
 new_repo ready-device
 commit_file app/src/main/kotlin/Screen.kt
 with_sdk 'List of devices attached\nemulator-5554\tdevice\n\n'
-if output=$(push_branch) && [ "$(cat gradle-was-called)" = "--quiet connectedAndroidTest" ]; then
+if output=$(push_branch) && [ "$(cat gradle-was-called)" = "--quiet createDebugAndroidTestCoverageReport" ]; then
     pass "an app change with a device connected runs the device tests"
 else
     fail "an app change with a device connected runs the device tests: $output"
+fi
+
+new_repo low-device-coverage
+commit_file app/src/main/kotlin/Screen.kt
+with_sdk 'List of devices attached\nemulator-5554\tdevice\n\n' 30 70
+if output=$(push_branch); then
+    fail "device tests that cover too little block the push"
+elif printf '%s' "$output" | grep -q "device coverage:" && printf '%s' "$output" | grep -q "70%"; then
+    pass "device tests that cover too little block the push"
+else
+    fail "device tests that cover too little block the push: $output"
+fi
+
+new_repo enough-device-coverage
+commit_file app/src/main/kotlin/Screen.kt
+with_sdk 'List of devices attached\nemulator-5554\tdevice\n\n' 10 90
+if output=$(push_branch); then
+    pass "device tests that cover enough allow the push"
+else
+    fail "device tests that cover enough allow the push: $output"
 fi
 
 new_repo failing-device-tests

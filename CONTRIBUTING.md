@@ -47,7 +47,8 @@ and check that everything works:
   commit; it is never skipped.
 - **On the commit message:** require one Conventional Commits line with no body.
 - **Before each push:** if the push changes anything under `app/`, run the device tests. The push
-  is blocked when no emulator or device is connected.
+  is blocked when no emulator or device is connected, or when the device tests cover less than
+  80 percent of the app module's handwritten code.
 
 Do not skip or disable a hook. If one is wrong, fix the hook.
 

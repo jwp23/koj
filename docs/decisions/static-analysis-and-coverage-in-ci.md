@@ -18,7 +18,9 @@ These are the only third-party Gradle plugins in the build.
 Decision (2026-11-14): SonarQube's coverage measure excludes everything under
 `app/src/main/kotlin`. Debug builds of the app collect coverage from device tests instead
 (`enableAndroidTestCoverage`), and the pre-push hook blocks a push that changes the app module
-when the line coverage in that report is below 80 percent.
+when the line coverage in that report is below 80 percent. The 80 percent is measured over
+handwritten code only: Room's generated `_Impl.kt` files are left out, because most of their lines
+are schema checks that no test of ours can reach. The HTML report still shows them.
 
 Rationale: Kover sees only tests that run on the JVM, and storage and screens are tested on an
 emulator, which CI does not have. Without the exclusion SonarQube would count all of that code
@@ -31,5 +33,4 @@ exercise only in part.
 `app/build/reports/coverage/androidTest/debug/connected/report.xml` in JaCoCo's format. When
 device tests run in CI, pass that report to SonarQube beside Kover's and remove the exclusion.
 
-Status: the exclusion in `build.gradle.kts` covers `app/src/main/kotlin`. The pre-push hook runs
-the device tests without comparing coverage to 80 percent yet.
+Status: the exclusion in `build.gradle.kts` covers `app/src/main/kotlin`.

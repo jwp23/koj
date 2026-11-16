@@ -12,8 +12,11 @@ A missing tool blocks the commit. `scripts/install-check-tools.sh` installs pinn
 copies of ktfmt and osv-scanner; betterleaks is installed separately.
 
 `scripts/pre-push-checks.sh` runs before every push. When the pushed commits change anything
-under `app/`, compared with the remote's `main`, it runs `./gradlew connectedAndroidTest`, and it
-blocks the push when no emulator or device is connected.
+under `app/`, compared with the remote's `main`, it runs `./gradlew createDebugAndroidTestCoverageReport`
+and then `scripts/check-device-coverage.sh`, and it blocks the push when no emulator or device is
+connected or when line coverage of the app module's handwritten code is below 80 percent
+(Room's generated `_Impl.kt` files are left out). See
+[static-analysis-and-coverage-in-ci.md](static-analysis-and-coverage-in-ci.md) for why.
 
 Rationale: Checks run fastest and most serious first, so a commit containing a secret is stopped
 before anything is compiled. A missing tool blocks rather than warns because a skipped check
