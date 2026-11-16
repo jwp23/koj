@@ -11,7 +11,8 @@ import kotlinx.coroutines.flow.Flow
 interface SourceDao {
     @Insert suspend fun insert(row: SourceRow): Long
 
-    @Update suspend fun update(row: SourceRow)
+    /** Returns how many rows changed: 0 when no stored source has the row's id. */
+    @Update suspend fun update(row: SourceRow): Int
 
     @Delete suspend fun delete(row: SourceRow)
 

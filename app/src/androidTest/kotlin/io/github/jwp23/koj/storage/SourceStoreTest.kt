@@ -130,5 +130,28 @@ class SourceStoreTest {
         assertEquals(false, store.source(shown)?.archived)
     }
 
+    @Test
+    fun aSippedDurationShorterThanAMillisecondSurvives() = runTest {
+        val sipped =
+            greenTea().copy(style = IntakeStyle.SIPPED, defaultDuration = Duration.ofNanos(500_000))
+
+        val id = store.save(sipped)
+
+        assertEquals(sipped.copy(id = id), store.source(id))
+        assertEquals(listOf(sipped.copy(id = id)), store.sources().first())
+    }
+
+    @Test
+    fun savingAnEditedSourceThatWasDeletedFails() = runTest {
+        val id = store.save(greenTea())
+        val loaded = store.source(id)!!
+        store.delete(loaded)
+
+        val failure = runCatching { store.save(loaded.copy(name = "Sencha")) }.exceptionOrNull()
+
+        assertTrue(failure is IllegalStateException)
+        assertTrue(store.sources().first().isEmpty())
+    }
+
     @Test fun anUnknownIdGivesNoSource() = runTest { assertNull(store.source(999)) }
 }

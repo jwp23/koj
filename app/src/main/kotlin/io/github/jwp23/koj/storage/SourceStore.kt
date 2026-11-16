@@ -11,11 +11,14 @@ class SourceStore(private val dao: SourceDao) {
     /** The source with this id, archived or not, or null. */
     suspend fun source(id: Long): Source? = dao.find(id)?.toSource()
 
-    /** Stores a new source (id 0) or replaces the stored one. Returns its id. */
+    /**
+     * Stores a new source (id 0) or replaces the stored one. Returns its id. Throws if the source
+     * has an id but no stored source has it, such as one deleted since it was loaded.
+     */
     suspend fun save(source: Source): Long {
         val row = source.toRow()
         if (source.id == 0L) return dao.insert(row)
-        dao.update(row)
+        check(dao.update(row) > 0) { "No stored source has id ${source.id}" }
         return source.id
     }
 

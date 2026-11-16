@@ -13,9 +13,9 @@ class Converters {
     @ColumnTypeConverter
     fun millisToInstant(value: Long?): Instant? = value?.let(Instant::ofEpochMilli)
 
-    @ColumnTypeConverter fun durationToMillis(value: Duration): Long = value.toMillis()
+    @ColumnTypeConverter fun durationToNanos(value: Duration): Long = value.toNanos()
 
-    @ColumnTypeConverter fun millisToDuration(value: Long): Duration = Duration.ofMillis(value)
+    @ColumnTypeConverter fun nanosToDuration(value: Long): Duration = Duration.ofNanos(value)
 
     @ColumnTypeConverter
     fun localTimeToSecondOfDay(value: LocalTime?): Int? = value?.toSecondOfDay()
