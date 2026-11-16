@@ -53,9 +53,7 @@ data class DrinkForm(
      * so that a start or finish in the future can be refused.
      */
     fun errors(zone: ZoneId, now: Instant): Set<DrinkField> = buildSet {
-        val amount = parseDecimal(servings)
-        if (amount == null || amount <= 0.0) add(DrinkField.SERVINGS)
-        else if (amount > MAX_SERVINGS) add(DrinkField.SERVINGS_TOO_MANY)
+        servingsError()?.let(::add)
         val start = start(zone)
         if (start.isAfter(now)) add(DrinkField.START_IN_FUTURE)
         if (finishDate == null && finishTime != null) add(DrinkField.FINISH_DATE)
@@ -64,6 +62,16 @@ data class DrinkForm(
         if (finish != null) {
             if (finish.isBefore(start)) add(DrinkField.FINISH_BEFORE_START)
             if (finish.isAfter(now)) add(DrinkField.FINISH_IN_FUTURE)
+        }
+    }
+
+    /** What is wrong with [servings] alone, or null when it is an amount that can be logged. */
+    fun servingsError(): DrinkField? {
+        val amount = parseDecimal(servings)
+        return when {
+            amount == null || amount <= 0.0 -> DrinkField.SERVINGS
+            amount > MAX_SERVINGS -> DrinkField.SERVINGS_TOO_MANY
+            else -> null
         }
     }
 
