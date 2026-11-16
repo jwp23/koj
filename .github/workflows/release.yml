@@ -1,0 +1,62 @@
+name: Release
+
+# Builds the signed APK and publishes it as a GitHub Release when a version tag
+# is pushed. See docs/decisions/release-versioning-and-signing.md.
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions: {}
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    # The signing secrets belong to this environment, which only v* tags may
+    # deploy to, so no branch or pull request build can read them.
+    environment: release
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Derive the version from the tag
+        id: version
+        run: scripts/release-version.sh "$GITHUB_REF_NAME" >> "$GITHUB_OUTPUT"
+
+      - uses: actions/setup-java@77dd5b2ce225ea11469928ac317850245a74ae78 # v6.2.0
+        with:
+          distribution: temurin
+          java-version: 25
+
+      - uses: gradle/actions/setup-gradle@8da46b539cd8fe6ab27ca75128919a18d757604c # v6.4.1
+
+      - name: Build the signed release APK
+        env:
+          KOJ_KEYSTORE_BASE64: ${{ secrets.KOJ_KEYSTORE_BASE64 }}
+          KOJ_KEYSTORE_PASSWORD: ${{ secrets.KOJ_KEYSTORE_PASSWORD }}
+          KOJ_KEY_ALIAS: ${{ secrets.KOJ_KEY_ALIAS }}
+          KOJ_KEY_PASSWORD: ${{ secrets.KOJ_KEY_PASSWORD }}
+          VERSION_NAME: ${{ steps.version.outputs.versionName }}
+          VERSION_CODE: ${{ steps.version.outputs.versionCode }}
+        run: |
+          export KOJ_KEYSTORE_FILE="$RUNNER_TEMP/release.jks"
+          printf '%s' "$KOJ_KEYSTORE_BASE64" | base64 --decode > "$KOJ_KEYSTORE_FILE"
+          # No configuration cache: an entry would record the signing passwords,
+          # which the build reads while it is being configured.
+          ./gradlew --no-configuration-cache test lint assembleRelease \
+            "-Pkoj.versionName=$VERSION_NAME" "-Pkoj.versionCode=$VERSION_CODE"
+          rm -f "$KOJ_KEYSTORE_FILE"
+
+      - name: Publish the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION_NAME: ${{ steps.version.outputs.versionName }}
+        run: |
+          # An unsigned build is named app-release-unsigned.apk, so this fails
+          # rather than publishing an APK that cannot be installed.
+          cp app/build/outputs/apk/release/app-release.apk "koj-$VERSION_NAME.apk"
+          gh release create "$GITHUB_REF_NAME" "koj-$VERSION_NAME.apk" \
+            --repo "$GITHUB_REPOSITORY" --verify-tag --title "koj $VERSION_NAME" --generate-notes
