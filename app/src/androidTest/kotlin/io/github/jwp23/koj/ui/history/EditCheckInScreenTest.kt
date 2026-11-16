@@ -82,7 +82,7 @@ class EditCheckInScreenTest {
     fun ratingsAreShownAndChanged() {
         val checkIn = saveCheckIn()
         show(checkIn.id)
-        waitForText("Edit check-in")
+        waitForText("Awake (1 to 5)")
         field("Awake (1 to 5)").assertTextEquals("Awake (1 to 5)", "4")
         field("Focus (1 to 5)").assertTextEquals("Focus (1 to 5)", "")
         field("Calm (1 to 5)").assertTextEquals("Calm (1 to 5)", "2")
@@ -106,7 +106,7 @@ class EditCheckInScreenTest {
     fun aRatingOutOfRangeIsRefused() {
         val checkIn = saveCheckIn()
         show(checkIn.id)
-        waitForText("Edit check-in")
+        waitForText("Awake (1 to 5)")
         field("Awake (1 to 5)").performTextReplacement("6")
         save()
         composeRule
@@ -120,7 +120,7 @@ class EditCheckInScreenTest {
     fun clearingEveryRatingIsRefused() {
         val checkIn = saveCheckIn()
         show(checkIn.id)
-        waitForText("Edit check-in")
+        waitForText("Awake (1 to 5)")
         field("Awake (1 to 5)").performTextReplacement("")
         field("Calm (1 to 5)").performTextReplacement("")
         save()
@@ -131,7 +131,7 @@ class EditCheckInScreenTest {
     @Test
     fun deletingRemovesIt() {
         show(saveCheckIn().id)
-        waitForText("Edit check-in")
+        waitForText("Awake (1 to 5)")
         composeRule.onNodeWithText("Delete").performClick()
         composeRule.onNodeWithText("Delete this check-in?").assertIsDisplayed()
         composeRule.onNode(dialogButton("Cancel")).performClick()
