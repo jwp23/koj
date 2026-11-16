@@ -86,8 +86,8 @@ class MainActivityTest {
         val title = composeRule.onNode(heading("Today")).getUnclippedBoundsInRoot()
         assertTrue("heading top ${title.top} above inset $topInset", title.top >= topInset)
         assertTrue(
-            "bar bottom ${bar.bottom} below ${root.height - bottomInset}",
-            bar.bottom <= root.height - bottomInset,
+            "bar bottom ${bar.bottom} below ${root.bottom - bottomInset}",
+            bar.bottom <= root.bottom - bottomInset,
         )
     }
 }
