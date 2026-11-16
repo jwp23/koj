@@ -22,8 +22,8 @@ class SourceStore(private val dao: SourceDao) {
         return source.id
     }
 
-    /** Removes the source. */
-    suspend fun delete(source: Source) = dao.delete(source.toRow())
+    /** Archives the source when any drink refers to it; removes it otherwise. */
+    suspend fun delete(source: Source) = dao.archiveOrRemove(source.toRow())
 }
 
 private fun SourceRow.toSource() =
