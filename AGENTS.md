@@ -41,6 +41,8 @@ build file; do not add version checks or compatibility code beneath it.
 - Store times as instants with their time zone, never as local date-time strings.
 - Every default pharmacokinetic value cites its source in a comment where it is defined. Do not
   introduce a number from memory.
+- The app module holds only rows, DAOs, stores, view models, and screens. Anything else belongs in
+  `:core`. `scripts/check-app-is-wiring.sh` enforces the file kinds and the imports.
 - Test fixtures use invented values, never a real person's data.
 - A new dependency needs a decision doc first. Each one is supply-chain exposure.
 - Name things for what they do in the domain. Comments explain what and why, never what changed.
@@ -109,7 +111,7 @@ Formats and numbering: `docs/decision-recording.md`.
 `scripts/setup-hooks.sh` enables the committed hooks.
 
 - `pre-commit` scans staged changes for secrets with `betterleaks`, then runs
-  `scripts/check-format.sh` (ktfmt), `scripts/audit-dependencies.sh` (osv-scanner over the
+  `scripts/check-format.sh` (ktfmt), `scripts/check-app-is-wiring.sh`, `scripts/audit-dependencies.sh` (osv-scanner over the
   lockfiles), and `./gradlew test lint`. A missing tool blocks the commit;
   `scripts/install-check-tools.sh` installs ktfmt and osv-scanner.
 - `commit-msg` checks the commit convention.
