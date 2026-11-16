@@ -55,6 +55,7 @@ refuses v1.2.3-beta "a tag with a suffix is refused"
 refuses "" "an empty tag is refused"
 refuses "v1.2.3
 v9.9.9" "a tag containing a line break is refused"
+refuses v0.0.0 "version 0.0.0 is refused because its code would be zero"
 refuses v210000.0.0 "a major version too large for a version code is refused"
 
 if [ "$failures" -ne 0 ]; then

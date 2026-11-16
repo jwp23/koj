@@ -9,7 +9,7 @@
 #
 # Usage: release-version.sh <tag>
 # Prints two lines, versionName=<name> and versionCode=<code>, in the form a
-# GitHub Actions step appends to $GITHUB_OUTPUT. Exits 1 for any other tag.
+# GitHub Actions step appends to $GITHUB_OUTPUT. Exits 1 for any other tag, and for v0.0.0.
 set -eu
 
 tag=${1:-}
@@ -27,6 +27,12 @@ major=${name%%.*}
 rest=${name#*.}
 minor=${rest%%.*}
 patch=${rest#*.}
+
+# Android requires a positive version code, and 0.0.0 would give zero.
+if [ "$name" = "0.0.0" ]; then
+    echo >&2 "release-version: '$tag' would give version code 0, which Android does not accept."
+    exit 1
+fi
 
 # Google Play accepts no version code above 2100000000. koj is not published
 # there, but staying within that limit keeps the code a number every tool accepts.
