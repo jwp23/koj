@@ -10,6 +10,7 @@ import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import java.time.LocalDate
 import java.time.LocalTime
 import org.junit.Rule
 import org.junit.Test
@@ -58,5 +59,27 @@ class PickerFieldsTest {
         composeRule.onNodeWithContentDescription("9 hours").performClick()
         composeRule.onNodeWithText("Cancel").performClick()
         composeRule.onNodeWithText("Start time: 08:30").assertIsDisplayed()
+    }
+
+    private fun showDate(label: String, start: LocalDate?) {
+        composeRule.setContent {
+            var date by remember { mutableStateOf(start) }
+            DateField(label, date, onDateChange = { date = it })
+        }
+    }
+
+    @Test
+    fun aDateIsPicked() {
+        showDate("Start date", LocalDate.of(2026, 3, 10))
+        composeRule.pickDate("Start date: 2026-03-10", "Monday, March 9, 2026")
+        composeRule.onNodeWithText("Start date: 2026-03-09").assertIsDisplayed()
+    }
+
+    @Test
+    fun okWithNoDateChosenLeavesItUnset() {
+        showDate("Finish date", null)
+        composeRule.onNodeWithText("Finish date").performClick()
+        composeRule.onNodeWithText("OK").performClick()
+        composeRule.onNodeWithText("Finish date").assertIsDisplayed()
     }
 }
