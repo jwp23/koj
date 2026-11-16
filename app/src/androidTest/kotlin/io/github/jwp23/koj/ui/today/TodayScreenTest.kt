@@ -240,6 +240,9 @@ class TodayScreenTest {
         waitForText("Espresso")
         composeRule.onNodeWithText("Espresso").performClick()
         waitForADrink()
+        // An hour on, the screen shows the drink's amount, so it has read the stored drink.
+        tickAt("2026-03-10T11:00:00Z")
+        waitForText("Caffeine in body: 71 mg")
         composeRule.onAllNodesWithText("In progress").assertCountEquals(0)
     }
 
