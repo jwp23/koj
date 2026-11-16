@@ -85,6 +85,7 @@ fun dayGraph(
 ): DayGraph {
     val (dayStart, dayEnd) = dayBounds(date, zone)
     require(!now.isBefore(dayStart)) { "Now, $now, is before $date starts at $dayStart" }
+    require(step > Duration.ZERO) { "Step must be positive, was $step" }
     val isToday = now.isBefore(dayEnd)
     val daysDrinks =
         drinks.filter { it.start >= dayStart && it.start < dayEnd }.sortedBy { it.start }

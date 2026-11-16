@@ -304,4 +304,32 @@ class DayGraphTest {
             graph(now = Instant.parse("2026-03-09T23:00:00Z"))
         }
     }
+
+    @Test
+    fun aZeroStepIsRefused() {
+        val error =
+            assertThrows(IllegalArgumentException::class.java) {
+                dayGraph(date, zone, dayOver, settings, emptyList(), emptyList(), Duration.ZERO)
+            }
+
+        assertEquals("Step must be positive, was PT0S", error.message)
+    }
+
+    @Test
+    fun aNegativeStepIsRefused() {
+        val error =
+            assertThrows(IllegalArgumentException::class.java) {
+                dayGraph(
+                    date,
+                    zone,
+                    dayOver,
+                    settings,
+                    emptyList(),
+                    emptyList(),
+                    Duration.ofMinutes(-5),
+                )
+            }
+
+        assertEquals("Step must be positive, was PT-5M", error.message)
+    }
 }
