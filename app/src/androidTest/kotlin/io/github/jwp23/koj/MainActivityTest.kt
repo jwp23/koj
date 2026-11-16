@@ -7,8 +7,12 @@ import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.isHeading
 import androidx.compose.ui.test.isSelectable
 import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
+import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performClick
-import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.Density
+import androidx.core.graphics.Insets
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowInsetsCompat.Type.systemBars
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import org.junit.Assert.assertTrue
 import org.junit.Rule
@@ -67,9 +71,23 @@ class MainActivityTest {
 
     @Test
     fun theBarStaysInsideTheSystemBars() {
+        composeRule.waitForIdle()
+        lateinit var insets: Insets
+        lateinit var density: Density
+        composeRule.runOnUiThread {
+            val view = composeRule.activity.window.decorView
+            insets = checkNotNull(ViewCompat.getRootWindowInsets(view)).getInsets(systemBars())
+            density = Density(view.resources.displayMetrics.density)
+        }
+        val topInset = with(density) { insets.top.toDp() }
+        val bottomInset = with(density) { insets.bottom.toDp() }
+        val root = composeRule.onRoot().getUnclippedBoundsInRoot()
         val bar = composeRule.onNode(barItem("Today")).getUnclippedBoundsInRoot()
         val title = composeRule.onNode(heading("Today")).getUnclippedBoundsInRoot()
-        assertTrue("bar top ${bar.top}", bar.top > 0.dp)
-        assertTrue("heading top ${title.top}", title.top > 0.dp)
+        assertTrue("heading top ${title.top} above inset $topInset", title.top >= topInset)
+        assertTrue(
+            "bar bottom ${bar.bottom} below ${root.height - bottomInset}",
+            bar.bottom <= root.height - bottomInset,
+        )
     }
 }
