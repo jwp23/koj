@@ -136,4 +136,22 @@ class HistoryDayTest {
         assertEquals(1, days.size)
         assertEquals(auckland, days.single().zone)
     }
+
+    @Test
+    fun aDaysEntriesAreInTimeOrder() {
+        val day =
+            historyDays(
+                    listOf(drink(1, "2026-03-10T09:00:00Z"), drink(2, "2026-03-10T12:00:00Z")),
+                    listOf(checkIn(1, "2026-03-10T10:00:00Z")),
+                )
+                .single()
+        assertEquals(
+            listOf(
+                DrinkEntry(day.drinks[0]),
+                CheckInEntry(day.checkIns[0]),
+                DrinkEntry(day.drinks[1]),
+            ),
+            day.entries(),
+        )
+    }
 }

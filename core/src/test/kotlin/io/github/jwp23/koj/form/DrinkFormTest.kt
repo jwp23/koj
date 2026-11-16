@@ -200,4 +200,56 @@ class DrinkFormTest {
         assertEquals(march10, pickedDate(1773100800000L))
         assertEquals(march10, pickedDate(1773100800000L + 86_399_999))
     }
+
+    private val edited = DrinkForm("2", march10, LocalTime.of(9, 0), march10, LocalTime.of(9, 45))
+
+    @Test
+    fun applyingChangesTheAmountStartAndFinishOfASippedDrink() {
+        val stored = drink(Instant.parse("2026-03-10T09:10:00Z"))
+        val changed = edited.applyTo(stored)
+        assertEquals(
+            stored.copy(
+                servings = 2.0,
+                start = Instant.parse("2026-03-10T09:00:00Z"),
+                finish = Instant.parse("2026-03-10T09:45:00Z"),
+            ),
+            changed,
+        )
+    }
+
+    @Test
+    fun applyingKeepsASippedDrinkInProgressWhenThereIsNoFinish() {
+        val changed = edited.copy(finishDate = null, finishTime = null).applyTo(drink(null))
+        assertNull(changed.finish)
+    }
+
+    @Test
+    fun applyingUsesTheZoneOfTheDrink() {
+        // 09:00 on 2026-03-10 in Auckland (UTC+13) is 2026-03-09T20:00:00Z.
+        val changed = edited.applyTo(drink(null, ZoneId.of("Pacific/Auckland")))
+        assertEquals(Instant.parse("2026-03-09T20:00:00Z"), changed.start)
+        assertEquals(ZoneId.of("Pacific/Auckland"), changed.zone)
+    }
+
+    @Test
+    fun applyingFinishesAFastDrinkWhereItStarts() {
+        val fast = drink(null).copy(style = IntakeStyle.FAST, defaultDuration = Duration.ZERO)
+        val changed = edited.copy(finishDate = null, finishTime = null).applyTo(fast)
+        assertEquals(Instant.parse("2026-03-10T09:00:00Z"), changed.start)
+        assertEquals(changed.start, changed.finish)
+    }
+
+    @Test
+    fun aFastDrinkIsEditedWithoutFinishFields() {
+        val fast =
+            drink(Instant.parse("2026-03-10T08:30:00Z"))
+                .copy(style = IntakeStyle.FAST, defaultDuration = Duration.ZERO)
+        assertEquals(DrinkForm("0.5", march10, LocalTime.of(8, 30)), fast.toEditForm())
+    }
+
+    @Test
+    fun aSippedDrinkIsEditedWithItsFinish() {
+        val sipped = drink(Instant.parse("2026-03-10T09:10:00Z"))
+        assertEquals(sipped.toForm(), sipped.toEditForm())
+    }
 }
