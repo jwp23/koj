@@ -8,12 +8,14 @@ import androidx.room3.RoomDatabase
 import androidx.sqlite.driver.AndroidSQLiteDriver
 
 /** The on-device database. Version 1 until the first release is tagged. */
-@Database(entities = [SourceRow::class, DrinkRow::class], version = 1)
+@Database(entities = [SourceRow::class, DrinkRow::class, CheckInRow::class], version = 1)
 @ColumnTypeConverters(Converters::class)
 abstract class KojDatabase : RoomDatabase() {
     abstract fun sourceDao(): SourceDao
 
     abstract fun drinkDao(): DrinkDao
+
+    abstract fun checkInDao(): CheckInDao
 }
 
 /** Opens the app's database file. */
