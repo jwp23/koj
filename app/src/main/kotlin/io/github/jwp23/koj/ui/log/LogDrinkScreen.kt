@@ -95,7 +95,7 @@ fun LogDrinkScreen(model: LogDrinkViewModel, onDone: () -> Unit) {
 }
 
 @Composable
-private fun Heading(text: String) {
+internal fun Heading(text: String) {
     Text(
         text,
         style = MaterialTheme.typography.headlineMedium,
