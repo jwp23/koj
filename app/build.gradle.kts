@@ -1,8 +1,12 @@
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.compose)
+    alias(libs.plugins.ksp)
+    alias(libs.plugins.room)
     alias(libs.plugins.kover)
 }
+
+room3 { schemaDirectory("$projectDir/schemas") }
 
 android {
     namespace = "io.github.jwp23.koj"
@@ -18,6 +22,7 @@ android {
     }
 
     buildTypes {
+        debug { enableAndroidTestCoverage = true }
         release {
             isMinifyEnabled = true
             isShrinkResources = true
@@ -46,6 +51,13 @@ dependencies {
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.activity.compose)
     implementation(libs.androidx.compose.material3)
+    implementation(libs.androidx.room3.runtime)
+    // Declared so the app ships the coroutines version the test library is built for.
+    implementation(libs.kotlinx.coroutines.android)
+    ksp(libs.androidx.room3.compiler)
+
+    // Registers the empty activity that createComposeRule() hosts a composable in.
+    debugImplementation(libs.androidx.compose.ui.test.manifest)
 
     androidTestImplementation(platform(libs.androidx.compose.bom))
     androidTestImplementation(libs.androidx.compose.ui.test.junit4)
@@ -53,4 +65,5 @@ dependencies {
     androidTestImplementation(libs.androidx.test.espresso.core)
     androidTestImplementation(libs.androidx.test.ext.junit)
     androidTestImplementation(libs.androidx.test.runner)
+    androidTestImplementation(libs.kotlinx.coroutines.test)
 }

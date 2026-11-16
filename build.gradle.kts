@@ -3,6 +3,8 @@ plugins {
     alias(libs.plugins.android.lint) apply false
     alias(libs.plugins.kotlin.compose) apply false
     alias(libs.plugins.kotlin.jvm) apply false
+    alias(libs.plugins.ksp) apply false
+    alias(libs.plugins.room) apply false
     alias(libs.plugins.kover)
     alias(libs.plugins.sonarqube)
 }
@@ -33,13 +35,10 @@ sonar {
             "sonar.coverage.jacoco.xmlReportPaths",
             layout.buildDirectory.file("reports/kover/report.xml").get().asFile.path,
         )
-        // MainActivity is the Compose entry point with no logic of its own; the instrumented device
-        // test covers it and Kover does not collect that test, so it would otherwise count as
-        // uncovered.
-        property(
-            "sonar.coverage.exclusions",
-            "app/src/main/kotlin/io/github/jwp23/koj/MainActivity.kt",
-        )
+        // The app module is tested on a device, which Kover does not see, so its coverage is
+        // checked by the pre-push hook instead. See
+        // docs/decisions/static-analysis-and-coverage-in-ci.md.
+        property("sonar.coverage.exclusions", "app/src/main/kotlin/**")
         property("sonar.issue.ignore.multicriteria", "e1")
         // kotlin:S6474 (no verification-metadata.xml) is deliberately not configured here: it is
         // a project-level issue with no file, which this file-path based setting cannot match. The

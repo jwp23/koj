@@ -3,8 +3,7 @@
 Decision: Storage uses Room 3 (`androidx.room3`), with its compiler run by KSP, the Room Gradle
 plugin exporting schemas to `app/schemas/`, and `AndroidSQLiteDriver` as the SQLite driver. The
 app module declares `kotlinx-coroutines-android` itself, at the same version as
-`kotlinx-coroutines-test`. Versions live in `gradle/libs.versions.toml`. The checked-in build does not declare any of this
-yet; it is added with the first screen that stores data.
+`kotlinx-coroutines-test`. Versions live in `gradle/libs.versions.toml`.
 
 Rationale: Room 3 is the current stable line and the only one the Android guides still
 document; a new app has nothing that depends on the older API it drops. Room 3 requires KSP and
