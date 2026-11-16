@@ -41,8 +41,9 @@ and check that everything works:
 
 ## What the Hooks Do
 
-- **Before each commit:** scan the staged changes for secrets, check formatting, audit the locked
-  dependencies for known vulnerabilities, then run the tests and lint. A missing tool blocks the
+- **Before each commit:** scan the staged changes for secrets, check formatting, check that the
+  app module holds only wiring, audit the locked dependencies for known vulnerabilities, then run
+  the tests and lint. A missing tool blocks the
   commit; it is never skipped.
 - **On the commit message:** require one Conventional Commits line with no body.
 - **Before each push:** if the push changes anything under `app/`, run the device tests. The push

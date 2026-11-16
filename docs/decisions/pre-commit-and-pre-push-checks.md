@@ -4,8 +4,9 @@ Decision: `scripts/pre-commit-checks.sh` runs before every commit, in this order
 
 1. `betterleaks git --pre-commit --staged --redact` — secrets in the staged changes
 2. `scripts/check-format.sh` — ktfmt over every tracked Kotlin file and build script
-3. `scripts/audit-dependencies.sh` — osv-scanner over the Gradle lockfiles
-4. `./gradlew --quiet test lint` — JVM tests and Android Lint
+3. `scripts/check-app-is-wiring.sh` — the app module holds only wiring; see `app-module-is-wiring.md`
+4. `scripts/audit-dependencies.sh` — osv-scanner over the Gradle lockfiles
+5. `./gradlew --quiet test lint` — JVM tests and Android Lint
 
 A missing tool blocks the commit. `scripts/install-check-tools.sh` installs pinned, checksummed
 copies of ktfmt and osv-scanner; betterleaks is installed separately.

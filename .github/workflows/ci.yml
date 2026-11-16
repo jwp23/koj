@@ -38,6 +38,9 @@ jobs:
             "$test"
           done
 
+      - name: Check the app module is wiring
+        run: scripts/check-app-is-wiring.sh
+
   format:
     runs-on: ubuntu-latest
     permissions:
