@@ -25,6 +25,8 @@ import java.time.Duration
 import java.time.LocalTime
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.test.StandardTestDispatcher
+import kotlinx.coroutines.test.TestCoroutineScheduler
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
@@ -85,9 +87,32 @@ class SettingsScreenTest {
     }
 
     @Test
-    fun theHeadingShowsBeforeTheStoredSettingsAreRead() {
-        show()
-        composeRule.onNodeWithText("Settings").assertIsDisplayed()
+    fun noFieldsAreShownUntilTheStoredSettingsAreRead() {
+        val readGate = TestCoroutineScheduler()
+        val gatedDatabase =
+            Room.inMemoryDatabaseBuilder<KojDatabase>(
+                    ApplicationProvider.getApplicationContext<Context>(),
+                )
+                .setDriver(AndroidSQLiteDriver())
+                .setQueryCoroutineContext(StandardTestDispatcher(readGate))
+                .build()
+        try {
+            val model = SettingsViewModel(SettingsStore(gatedDatabase.settingsDao()))
+            composeRule.setContent { SettingsScreen(model) }
+            composeRule.onNodeWithText("Settings").assertIsDisplayed()
+            composeRule.onAllNodesWithText("Caffeine half-life (hours)").assertCountEquals(0)
+            composeRule.onAllNodesWithText("Save").assertCountEquals(0)
+
+            composeRule.waitUntil(5_000) {
+                readGate.advanceUntilIdle()
+                composeRule
+                    .onAllNodesWithText("Caffeine half-life (hours)")
+                    .fetchSemanticsNodes()
+                    .isNotEmpty()
+            }
+        } finally {
+            gatedDatabase.close()
+        }
     }
 
     @Test
