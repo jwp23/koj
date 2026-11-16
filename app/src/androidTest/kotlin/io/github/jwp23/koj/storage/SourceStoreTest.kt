@@ -120,5 +120,15 @@ class SourceStoreTest {
         }
     }
 
+    @Test
+    fun anArchivedSourceIsStoredButNotListed() = runTest {
+        val shown = store.save(greenTea("Black tea"))
+        val archivedId = store.save(greenTea().copy(archived = true))
+
+        assertEquals(listOf(shown), store.sources().first().map { it.id })
+        assertEquals(true, store.source(archivedId)?.archived)
+        assertEquals(false, store.source(shown)?.archived)
+    }
+
     @Test fun anUnknownIdGivesNoSource() = runTest { assertNull(store.source(999)) }
 }
