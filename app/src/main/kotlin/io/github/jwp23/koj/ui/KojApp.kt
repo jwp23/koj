@@ -21,6 +21,12 @@ import androidx.navigation3.runtime.rememberNavBackStack
 import androidx.navigation3.runtime.rememberSaveableStateHolderNavEntryDecorator
 import androidx.navigation3.ui.NavDisplay
 import io.github.jwp23.koj.AppContainer
+import io.github.jwp23.koj.ui.history.EditCheckInScreen
+import io.github.jwp23.koj.ui.history.EditCheckInViewModel
+import io.github.jwp23.koj.ui.history.EditDrinkScreen
+import io.github.jwp23.koj.ui.history.EditDrinkViewModel
+import io.github.jwp23.koj.ui.history.HistoryScreen
+import io.github.jwp23.koj.ui.history.HistoryViewModel
 import io.github.jwp23.koj.ui.log.LogDrinkScreen
 import io.github.jwp23.koj.ui.log.LogDrinkViewModel
 import io.github.jwp23.koj.ui.settings.SettingsScreen
@@ -81,7 +87,58 @@ fun KojApp(container: AppContainer) {
                                 onOpenSources = { backStack.chooseBarDestination(Sources) },
                             )
                         }
-                        entry<History> { Placeholder("History") }
+                        entry<History> {
+                            HistoryScreen(
+                                viewModel(
+                                    factory =
+                                        viewModelFactory {
+                                            initializer {
+                                                HistoryViewModel(
+                                                    container.drinks,
+                                                    container.checkIns,
+                                                    container.settings,
+                                                    container.clock,
+                                                )
+                                            }
+                                        },
+                                ),
+                                onEditDrink = { backStack.add(EditDrink(it)) },
+                                onEditCheckIn = { backStack.add(EditCheckIn(it)) },
+                            )
+                        }
+                        entry<EditDrink> { key ->
+                            EditDrinkScreen(
+                                viewModel(
+                                    factory =
+                                        viewModelFactory {
+                                            initializer {
+                                                EditDrinkViewModel(
+                                                    container.drinks,
+                                                    container.clock,
+                                                    key.drinkId,
+                                                )
+                                            }
+                                        },
+                                ),
+                                onDone = { backStack.removeLastOrNull() },
+                            )
+                        }
+                        entry<EditCheckIn> { key ->
+                            EditCheckInScreen(
+                                viewModel(
+                                    factory =
+                                        viewModelFactory {
+                                            initializer {
+                                                EditCheckInViewModel(
+                                                    container.checkIns,
+                                                    key.checkInId,
+                                                )
+                                            }
+                                        },
+                                ),
+                                onDone = { backStack.removeLastOrNull() },
+                            )
+                        }
                         entry<Sources> {
                             SourcesScreen(
                                 viewModel(
