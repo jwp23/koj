@@ -24,6 +24,8 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import io.github.jwp23.koj.form.MAX_CHECK_IN_DELAY_MINUTES
+import io.github.jwp23.koj.form.MAX_HALF_LIFE_HOURS
 import io.github.jwp23.koj.form.SettingsField
 import io.github.jwp23.koj.form.SettingsForm
 import io.github.jwp23.koj.form.formatTime
@@ -31,6 +33,12 @@ import io.github.jwp23.koj.ui.TimeField
 import java.time.LocalTime
 
 private const val NUMBER_ABOVE_ZERO = "Enter a number above 0"
+private const val MINUTES_PER_HOUR = 60
+private const val HOURS_MESSAGE = "Enter hours above 0, up to $MAX_HALF_LIFE_HOURS"
+private const val MINUTES_MESSAGE =
+    "Enter minutes above 0, up to ${MAX_HALF_LIFE_HOURS * MINUTES_PER_HOUR}"
+private const val DELAYS_MESSAGE =
+    "Enter whole minutes, 1 to $MAX_CHECK_IN_DELAY_MINUTES, separated by commas"
 
 @Composable
 fun SettingsScreen(model: SettingsViewModel) {
@@ -67,7 +75,7 @@ private fun SettingsFields(
         "Caffeine half-life (hours)",
         form.caffeineHalfLifeHours,
         SettingsField.CAFFEINE_HALF_LIFE in errors,
-        NUMBER_ABOVE_ZERO,
+        HOURS_MESSAGE,
         KeyboardType.Decimal,
     ) {
         onChange(form.copy(caffeineHalfLifeHours = it))
@@ -76,7 +84,7 @@ private fun SettingsFields(
         "Caffeine absorption half-life (minutes)",
         form.caffeineAbsorptionMinutes,
         SettingsField.CAFFEINE_ABSORPTION in errors,
-        NUMBER_ABOVE_ZERO,
+        MINUTES_MESSAGE,
         KeyboardType.Decimal,
     ) {
         onChange(form.copy(caffeineAbsorptionMinutes = it))
@@ -85,7 +93,7 @@ private fun SettingsFields(
         "L-theanine half-life (minutes)",
         form.theanineHalfLifeMinutes,
         SettingsField.THEANINE_HALF_LIFE in errors,
-        NUMBER_ABOVE_ZERO,
+        MINUTES_MESSAGE,
         KeyboardType.Decimal,
     ) {
         onChange(form.copy(theanineHalfLifeMinutes = it))
@@ -94,7 +102,7 @@ private fun SettingsFields(
         "L-theanine absorption half-life (minutes)",
         form.theanineAbsorptionMinutes,
         SettingsField.THEANINE_ABSORPTION in errors,
-        NUMBER_ABOVE_ZERO,
+        MINUTES_MESSAGE,
         KeyboardType.Decimal,
     ) {
         onChange(form.copy(theanineAbsorptionMinutes = it))
@@ -108,7 +116,7 @@ private fun SettingsFields(
         "Check-ins after a drink (minutes, separated by commas)",
         form.afterDrinkCheckInMinutes,
         SettingsField.AFTER_DRINK_CHECK_INS in errors,
-        "Enter whole minutes, 1 or more, separated by commas",
+        DELAYS_MESSAGE,
         KeyboardType.Text,
     ) {
         onChange(form.copy(afterDrinkCheckInMinutes = it))

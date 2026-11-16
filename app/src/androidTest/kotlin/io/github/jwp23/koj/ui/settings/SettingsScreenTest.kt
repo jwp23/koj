@@ -117,7 +117,7 @@ class SettingsScreenTest {
         field("Caffeine half-life (hours)").performTextReplacement("0")
         field("Full check-ins per day, at most").performTextReplacement("-1")
         save()
-        field("Enter a number above 0").assertIsDisplayed()
+        field("Enter hours above 0, up to 8760").assertIsDisplayed()
         field("Enter a whole number, 0 or more").assertIsDisplayed()
         composeRule.onAllNodesWithText("Saved").assertCountEquals(0)
         assertEquals(Settings(), stored())
@@ -130,8 +130,44 @@ class SettingsScreenTest {
         field("Check-ins after a drink (minutes, separated by commas)")
             .performTextReplacement("30;90")
         save()
-        field("Enter whole minutes, 1 or more, separated by commas").assertIsDisplayed()
+        field("Enter whole minutes, 1 to 1440, separated by commas").assertIsDisplayed()
         assertEquals(Settings(), stored())
+    }
+
+    @Test
+    fun aHalfLifeAtTheLimitIsStoredAndOnePastItIsExplained() {
+        show()
+        waitForText("Caffeine half-life (hours)")
+        field("Caffeine half-life (hours)").performTextReplacement("8761")
+        field("L-theanine half-life (minutes)").performTextReplacement("525601")
+        save()
+        field("Enter hours above 0, up to 8760").assertIsDisplayed()
+        field("Enter minutes above 0, up to 525600").assertIsDisplayed()
+        assertEquals(Settings(), stored())
+
+        field("Caffeine half-life (hours)").performTextReplacement("8760")
+        field("L-theanine half-life (minutes)").performTextReplacement("525600")
+        saveAndWaitForSaved()
+        assertEquals(Duration.ofHours(8760), stored().caffeine.eliminationHalfLife)
+        assertEquals(Duration.ofMinutes(525600), stored().theanine.eliminationHalfLife)
+    }
+
+    @Test
+    fun anAfterDrinkDelayAtTheLimitIsStoredAndOnePastItIsExplained() {
+        show()
+        waitForText("Caffeine half-life (hours)")
+        val label = "Check-ins after a drink (minutes, separated by commas)"
+        field(label).performTextReplacement("45, 1441")
+        save()
+        field("Enter whole minutes, 1 to 1440, separated by commas").assertIsDisplayed()
+        assertEquals(Settings(), stored())
+
+        field(label).performTextReplacement("45, 1440")
+        saveAndWaitForSaved()
+        assertEquals(
+            listOf(Duration.ofMinutes(45), Duration.ofMinutes(1440)),
+            stored().afterDrinkCheckIns,
+        )
     }
 
     @Test
