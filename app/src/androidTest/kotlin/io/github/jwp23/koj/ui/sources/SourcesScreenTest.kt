@@ -92,4 +92,25 @@ class SourcesScreenTest {
         composeRule.onNodeWithText("Add source").performClick()
         assertEquals(true, added)
     }
+
+    @Test
+    fun addSourceStaysReachableWithManySources() {
+        runBlocking {
+            repeat(40) { number ->
+                store.save(
+                    Source(
+                        name = "Source $number",
+                        caffeineMgPerServing = 10.0,
+                        theanineMgPerServing = 0.0,
+                        style = IntakeStyle.FAST,
+                    ),
+                )
+            }
+        }
+        var added = false
+        show(onAdd = { added = true })
+        waitForText("Source 0")
+        composeRule.onNodeWithText("Add source").assertIsDisplayed().performClick()
+        assertEquals(true, added)
+    }
 }

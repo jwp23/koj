@@ -30,7 +30,7 @@ fun SourcesScreen(model: SourcesViewModel, onAdd: () -> Unit, onEdit: (Long) -> 
             modifier = Modifier.semantics { heading() },
         )
         if (sources.isEmpty()) Text("No sources yet.", Modifier.padding(vertical = 8.dp))
-        LazyColumn {
+        LazyColumn(Modifier.weight(1f)) {
             items(sources, key = { it.id }) { source ->
                 Column(
                     Modifier.fillMaxWidth()
