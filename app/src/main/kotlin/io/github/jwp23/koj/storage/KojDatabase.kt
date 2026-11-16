@@ -7,11 +7,19 @@ import androidx.room3.Room
 import androidx.room3.RoomDatabase
 import androidx.sqlite.driver.AndroidSQLiteDriver
 
-/** The on-device database. Version 1 until the first release is tagged. */
-@Database(entities = [SourceRow::class], version = 1)
+/**
+ * The on-device database. Version 1 until the first release is tagged, with no migrations before
+ * then: a build that changes the schema cannot open a database written by an earlier build, so
+ * uninstall the app or clear its data after pulling such a change.
+ */
+@Database(entities = [SourceRow::class, DrinkRow::class, CheckInRow::class], version = 1)
 @ColumnTypeConverters(Converters::class)
 abstract class KojDatabase : RoomDatabase() {
     abstract fun sourceDao(): SourceDao
+
+    abstract fun drinkDao(): DrinkDao
+
+    abstract fun checkInDao(): CheckInDao
 }
 
 /** Opens the app's database file. */

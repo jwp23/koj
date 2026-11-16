@@ -8,7 +8,9 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.github.jwp23.koj.intake.IntakeStyle
 import io.github.jwp23.koj.record.Source
 import java.time.Duration
+import java.time.Instant
 import java.time.LocalTime
+import java.time.ZoneId
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
 import org.junit.After
@@ -88,13 +90,42 @@ class SourceStoreTest {
     }
 
     @Test
-    fun aDeletedSourceIsGone() = runTest {
+    fun deletingASourceWithNoDrinksRemovesIt() = runTest {
         val id = store.save(greenTea())
+        val other = store.save(greenTea("Espresso"))
+        val drinks = DrinkStore(database.drinkDao())
+        val otherDrink =
+            store
+                .source(other)!!
+                .logged(1.0, Instant.parse("2026-03-10T09:00:00Z"), ZoneId.of("UTC"))
+        val otherDrinkId = drinks.save(otherDrink)
 
         store.delete(store.source(id)!!)
 
-        assertTrue(store.sources().first().isEmpty())
         assertNull(store.source(id))
+        assertEquals(false, store.source(other)?.archived)
+        assertEquals(otherDrink.copy(id = otherDrinkId), drinks.drink(otherDrinkId))
+    }
+
+    @Test
+    fun deletingASourceWithDrinksArchivesIt() = runTest {
+        val id = store.save(greenTea())
+        val source = store.source(id)!!
+        val drinks = DrinkStore(database.drinkDao())
+        drinks.save(source.logged(1.0, Instant.parse("2026-03-10T09:00:00Z"), ZoneId.of("UTC")))
+        val other = store.save(greenTea("Espresso"))
+        val otherDrink =
+            store
+                .source(other)!!
+                .logged(1.0, Instant.parse("2026-03-10T09:00:00Z"), ZoneId.of("UTC"))
+        val otherDrinkId = drinks.save(otherDrink)
+
+        store.delete(source)
+
+        assertEquals(listOf("Espresso"), store.sources().first().map { it.name })
+        assertEquals(otherDrink.copy(id = otherDrinkId), drinks.drink(otherDrinkId))
+        assertEquals(true, store.source(id)?.archived)
+        assertEquals(listOf("Green tea", "Espresso"), drinks.drinks().first().map { it.sourceName })
     }
 
     @Test
