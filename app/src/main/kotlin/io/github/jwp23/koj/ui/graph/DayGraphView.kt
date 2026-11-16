@@ -2,18 +2,28 @@ package io.github.jwp23.koj.ui.graph
 
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
@@ -22,12 +32,18 @@ import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import io.github.jwp23.koj.form.formatMg
 import io.github.jwp23.koj.form.formatRatio
+import io.github.jwp23.koj.form.formatTime
 import io.github.jwp23.koj.graph.DayGraph
 import io.github.jwp23.koj.graph.GraphPoint
+import io.github.jwp23.koj.graph.IntakeMarker
 import io.github.jwp23.koj.intake.Amounts
+import java.time.Instant
 import java.time.ZoneId
 
 private val GraphHeight = 200.dp
@@ -41,12 +57,22 @@ private val TouchTarget = 48.dp
  */
 private val MarkerInset = 24.dp
 
+/**
+ * How far a marker's visible mark stands in from each side of its touch target: (48 - 12) / 2, so a
+ * mark is 12 dp across and its rounded ends are centred on the times it marks.
+ */
+private val MarkInset = 18.dp
+
+/** How tall a marker's visible mark is. */
+private val MarkSize = 12.dp
+
 /** One day's lines, projection, and markers. Tapping a marker shows its details. */
 @Composable
 fun DayGraphView(graph: DayGraph, zone: ZoneId, modifier: Modifier = Modifier) {
     val caffeineColor = MaterialTheme.colorScheme.primary
     val theanineColor = MaterialTheme.colorScheme.tertiary
     val baselineColor = MaterialTheme.colorScheme.outline
+    var openDrink by remember { mutableStateOf<IntakeMarker?>(null) }
     Column(modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(4.dp)) {
         Row(
             horizontalArrangement = Arrangement.spacedBy(16.dp),
@@ -55,7 +81,9 @@ fun DayGraphView(graph: DayGraph, zone: ZoneId, modifier: Modifier = Modifier) {
             LegendEntry("Caffeine", caffeineColor)
             LegendEntry("L-theanine", theanineColor)
         }
-        Box(Modifier.fillMaxWidth().height(GraphHeight)) {
+        BoxWithConstraints(Modifier.fillMaxWidth().height(GraphHeight)) {
+            // The width the span is drawn across, between the insets at each side.
+            val spanWidth = maxWidth - TouchTarget
             Canvas(
                 Modifier.fillMaxSize()
                     .padding(
@@ -75,6 +103,9 @@ fun DayGraphView(graph: DayGraph, zone: ZoneId, modifier: Modifier = Modifier) {
                 drawAmountLine(graph, graph.past, caffeineColor) { it.caffeineMg }
                 drawAmountLine(graph, graph.past, theanineColor) { it.theanineMg }
             }
+            for (marker in graph.intakeMarkers) {
+                IntakeMarkerTarget(marker, graph, spanWidth, zone) { openDrink = marker }
+            }
         }
         val taken = graph.taken
         Text(
@@ -83,7 +114,64 @@ fun DayGraphView(graph: DayGraph, zone: ZoneId, modifier: Modifier = Modifier) {
                 "ratio ${formatRatio(taken.theanineToCaffeineRatio)}",
         )
     }
+    openDrink?.let { DrinkDetails(it, zone, onClose = { openDrink = null }) }
 }
+
+/**
+ * A drink's marker along the top of the box: a dot for a fast drink, a bar from start to end for a
+ * sipped one, inside a touch target at least [TouchTarget] square.
+ */
+@Composable
+private fun IntakeMarkerTarget(
+    marker: IntakeMarker,
+    graph: DayGraph,
+    spanWidth: Dp,
+    zone: ZoneId,
+    onOpen: () -> Unit,
+) {
+    val color = MaterialTheme.colorScheme.secondary
+    Box(
+        Modifier.offset(x = spanWidth * graph.position(marker.start))
+            .size(
+                width = TouchTarget + spanWidth * graph.lengthBetween(marker.start, marker.end),
+                height = TouchTarget,
+            )
+            .semantics {
+                contentDescription = "Drink: ${marker.sourceName} at ${marker.start.timeIn(zone)}"
+            }
+            .clickable(onClick = onOpen),
+        contentAlignment = Alignment.Center,
+    ) {
+        Box(
+            Modifier.fillMaxWidth()
+                .padding(horizontal = MarkInset)
+                .height(MarkSize)
+                .background(color, CircleShape),
+        )
+    }
+}
+
+@Composable
+private fun DrinkDetails(marker: IntakeMarker, zone: ZoneId, onClose: () -> Unit) {
+    val start = marker.start.timeIn(zone)
+    val time = if (marker.end == marker.start) start else "$start to ${marker.end.timeIn(zone)}"
+    AlertDialog(
+        onDismissRequest = onClose,
+        confirmButton = { TextButton(onClick = onClose) { Text("Close") } },
+        title = { Text(marker.sourceName) },
+        text = {
+            Column {
+                Text(time)
+                Text("${formatMg(marker.taken.caffeineMg)} caffeine")
+                Text("${formatMg(marker.taken.theanineMg)} L-theanine")
+                Text("Taken ratio: ${formatRatio(marker.taken.theanineToCaffeineRatio)}")
+            }
+        },
+    )
+}
+
+/** This instant's time of day in [zone], as HH:mm. */
+private fun Instant.timeIn(zone: ZoneId): String = formatTime(atZone(zone).toLocalTime())
 
 @Composable
 private fun LegendEntry(name: String, color: Color) {
