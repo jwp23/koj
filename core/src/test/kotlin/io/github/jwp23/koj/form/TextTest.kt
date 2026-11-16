@@ -27,6 +27,11 @@ class TextTest {
     }
 
     @Test
+    fun aNumberTooBigForADoubleIsRejected() {
+        assertNull(parseDecimal("9".repeat(309)))
+    }
+
+    @Test
     fun aWholeDecimalIsWrittenWithoutAFraction() {
         assertEquals("5", formatDecimal(5.0))
         assertEquals("0", formatDecimal(0.0))

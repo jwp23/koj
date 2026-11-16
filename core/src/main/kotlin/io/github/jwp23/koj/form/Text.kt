@@ -17,7 +17,8 @@ fun formatTime(time: LocalTime): String = time.format(timeFormat)
  */
 fun parseDecimal(text: String): Double? {
     val trimmed = text.trim()
-    return if (decimalPattern.matches(trimmed)) trimmed.toDouble() else null
+    return if (decimalPattern.matches(trimmed)) trimmed.toDouble().takeIf { it.isFinite() }
+    else null
 }
 
 /** Without a trailing ".0": 5.0 -> "5", 0.25 -> "0.25", 2.5 -> "2.5". */

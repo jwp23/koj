@@ -161,4 +161,11 @@ class SourceFormTest {
             assertEquals(text, setOf(SourceField.DURATION), form.errors())
         }
     }
+
+    @Test
+    fun anAmountTooBigForANumberIsAnError() {
+        val tooBig = "9".repeat(309)
+        val form = valid.copy(caffeineMg = tooBig, theanineMg = tooBig)
+        assertEquals(setOf(SourceField.CAFFEINE, SourceField.THEANINE), form.errors())
+    }
 }
