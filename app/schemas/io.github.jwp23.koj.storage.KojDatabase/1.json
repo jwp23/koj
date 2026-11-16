@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "database": {
     "version": 1,
-    "identityHash": "db9c6ef06d96d7683e68f9422aa88765",
+    "identityHash": "91413a83a08a951a7dc3cc3ef9cdeb88",
     "entities": [
       {
         "tableName": "source",
@@ -228,11 +228,95 @@
             "createSql": "CREATE INDEX IF NOT EXISTS `index_check_in_at` ON `${TABLE_NAME}` (`at`)"
           }
         ]
+      },
+      {
+        "tableName": "settings",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER NOT NULL, `caffeineAbsorptionHalfLife` INTEGER NOT NULL, `caffeineEliminationHalfLife` INTEGER NOT NULL, `theanineAbsorptionHalfLife` INTEGER NOT NULL, `theanineEliminationHalfLife` INTEGER NOT NULL, `afterDrinkCheckInMillis` TEXT NOT NULL, `fixedCheckInSecondsOfDay` TEXT NOT NULL, `dailyCheckInCap` INTEGER NOT NULL, `morningTime` INTEGER NOT NULL, `quietTime` INTEGER NOT NULL, `bedtime` INTEGER NOT NULL, `sipServings` REAL NOT NULL, PRIMARY KEY(`id`))",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "caffeineAbsorptionHalfLife",
+            "columnName": "caffeineAbsorptionHalfLife",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "caffeineEliminationHalfLife",
+            "columnName": "caffeineEliminationHalfLife",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "theanineAbsorptionHalfLife",
+            "columnName": "theanineAbsorptionHalfLife",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "theanineEliminationHalfLife",
+            "columnName": "theanineEliminationHalfLife",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "afterDrinkCheckInMillis",
+            "columnName": "afterDrinkCheckInMillis",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "fixedCheckInSecondsOfDay",
+            "columnName": "fixedCheckInSecondsOfDay",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "dailyCheckInCap",
+            "columnName": "dailyCheckInCap",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "morningTime",
+            "columnName": "morningTime",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "quietTime",
+            "columnName": "quietTime",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "bedtime",
+            "columnName": "bedtime",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "sipServings",
+            "columnName": "sipServings",
+            "affinity": "REAL",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "id"
+          ]
+        }
       }
     ],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'db9c6ef06d96d7683e68f9422aa88765')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '91413a83a08a951a7dc3cc3ef9cdeb88')"
     ]
   }
 }
