@@ -15,6 +15,7 @@ import androidx.room3.Room
 import androidx.sqlite.driver.AndroidSQLiteDriver
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import io.github.jwp23.koj.DeviceZoneClock
 import io.github.jwp23.koj.intake.IntakeStyle
 import io.github.jwp23.koj.intake.Kinetics
 import io.github.jwp23.koj.record.Settings
@@ -24,8 +25,10 @@ import io.github.jwp23.koj.storage.KojDatabase
 import io.github.jwp23.koj.storage.SettingsStore
 import io.github.jwp23.koj.storage.SourceStore
 import io.github.jwp23.koj.testing.MutableClock
+import java.time.Clock
 import java.time.Duration
 import java.time.Instant
+import java.time.ZoneId
 import java.time.ZoneOffset
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.first
@@ -55,13 +58,15 @@ class TodayScreenTest {
 
     @After fun closeDatabase() = database.close()
 
-    private fun newModel() = TodayViewModel(sourceStore, drinkStore, settingsStore, clock, ticks)
+    private fun newModel(modelClock: Clock = clock) =
+        TodayViewModel(sourceStore, drinkStore, settingsStore, modelClock, ticks)
 
     private fun show(
         onLogWithOptions: (Long) -> Unit = {},
         onOpenSources: () -> Unit = {},
+        modelClock: Clock = clock,
     ): TodayViewModel {
-        val model = newModel()
+        val model = newModel(modelClock)
         composeRule.setContent { TodayScreen(model, onLogWithOptions, onOpenSources) }
         return model
     }
@@ -260,5 +265,32 @@ class TodayScreenTest {
         composeRule.onNodeWithText("Source 39").assertIsDisplayed().performClick()
         waitForADrink()
         assertEquals("Source 39", storedDrinks().single().sourceName)
+    }
+
+    private val twoHoursEast = ZoneOffset.ofHours(2)
+
+    @Test
+    fun aNewDrinkIsStampedWithTheZoneTheDeviceIsInNow() {
+        var deviceZone: ZoneId = ZoneOffset.UTC
+        saveSources()
+        show(modelClock = DeviceZoneClock(clock) { deviceZone })
+        waitForText("Espresso")
+        deviceZone = twoHoursEast
+        composeRule.onNodeWithText("Espresso").performClick()
+        waitForADrink()
+        assertEquals(twoHoursEast, storedDrinks().single().zone)
+    }
+
+    @Test
+    fun aDrinksStartIsShownInTheZoneTheDeviceIsInNow() {
+        var deviceZone: ZoneId = ZoneOffset.UTC
+        saveSources()
+        show(modelClock = DeviceZoneClock(clock) { deviceZone })
+        waitForText("Green tea")
+        composeRule.onNodeWithText("Green tea").performClick()
+        waitForText("Green tea since 10:00")
+        deviceZone = twoHoursEast
+        ticks.tryEmit(Unit)
+        waitForText("Green tea since 12:00")
     }
 }
