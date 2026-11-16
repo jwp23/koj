@@ -1,5 +1,6 @@
 package io.github.jwp23.koj
 
+import android.content.Context
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsSelected
 import androidx.compose.ui.test.getUnclippedBoundsInRoot
@@ -7,21 +8,35 @@ import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.isHeading
 import androidx.compose.ui.test.isSelectable
 import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
+import androidx.compose.ui.test.onAllNodesWithText
+import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.unit.Density
 import androidx.core.graphics.Insets
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat.Type.systemBars
+import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
+import org.junit.rules.ExternalResource
 import org.junit.runner.RunWith
 
 @RunWith(AndroidJUnit4::class)
 class MainActivityTest {
-    @get:Rule val composeRule = createAndroidComposeRule<MainActivity>()
+    /** Starts each test with no database file, so what an earlier test saved is not listed. */
+    @get:Rule(order = 0)
+    val freshDatabase =
+        object : ExternalResource() {
+            override fun before() {
+                ApplicationProvider.getApplicationContext<Context>().deleteDatabase("koj.db")
+            }
+        }
+
+    @get:Rule(order = 1) val composeRule = createAndroidComposeRule<MainActivity>()
 
     private fun heading(text: String) = hasText(text) and isHeading()
 
@@ -89,5 +104,18 @@ class MainActivityTest {
             "bar bottom ${bar.bottom} below ${root.bottom - bottomInset}",
             bar.bottom <= root.bottom - bottomInset,
         )
+    }
+
+    @Test
+    fun aSourceCanBeAddedFromTheSourcesTab() {
+        composeRule.onNode(barItem("Sources")).performClick()
+        composeRule.onNodeWithText("Add source").performClick()
+        composeRule.onNodeWithText("Name").performTextInput("Mate")
+        composeRule.onNodeWithText("Save").performClick()
+        composeRule.waitUntil(5_000) {
+            composeRule.onAllNodesWithText("Mate").fetchSemanticsNodes().isNotEmpty()
+        }
+        composeRule.onNode(heading("Sources")).assertIsDisplayed()
+        composeRule.onNodeWithText("Mate").assertIsDisplayed()
     }
 }

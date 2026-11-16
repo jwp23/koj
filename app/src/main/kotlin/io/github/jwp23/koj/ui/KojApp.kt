@@ -10,7 +10,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
+import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.navigation3.rememberViewModelStoreNavEntryDecorator
+import androidx.lifecycle.viewmodel.viewModelFactory
 import androidx.navigation3.runtime.NavBackStack
 import androidx.navigation3.runtime.NavKey
 import androidx.navigation3.runtime.entryProvider
@@ -18,6 +21,10 @@ import androidx.navigation3.runtime.rememberNavBackStack
 import androidx.navigation3.runtime.rememberSaveableStateHolderNavEntryDecorator
 import androidx.navigation3.ui.NavDisplay
 import io.github.jwp23.koj.AppContainer
+import io.github.jwp23.koj.ui.sources.EditSourceScreen
+import io.github.jwp23.koj.ui.sources.EditSourceViewModel
+import io.github.jwp23.koj.ui.sources.SourcesScreen
+import io.github.jwp23.koj.ui.sources.SourcesViewModel
 
 @Composable
 fun KojApp(container: AppContainer) {
@@ -50,7 +57,31 @@ fun KojApp(container: AppContainer) {
                     entryProvider {
                         entry<Today> { Placeholder("Today") }
                         entry<History> { Placeholder("History") }
-                        entry<Sources> { Placeholder("Sources") }
+                        entry<Sources> {
+                            SourcesScreen(
+                                viewModel(
+                                    factory =
+                                        viewModelFactory {
+                                            initializer { SourcesViewModel(container.sources) }
+                                        },
+                                ),
+                                onAdd = { backStack.add(EditSource(null)) },
+                                onEdit = { backStack.add(EditSource(it)) },
+                            )
+                        }
+                        entry<EditSource> { key ->
+                            EditSourceScreen(
+                                viewModel(
+                                    factory =
+                                        viewModelFactory {
+                                            initializer {
+                                                EditSourceViewModel(container.sources, key.sourceId)
+                                            }
+                                        },
+                                ),
+                                onDone = { backStack.removeLastOrNull() },
+                            )
+                        }
                         entry<AppSettings> { Placeholder("Settings") }
                     },
             )

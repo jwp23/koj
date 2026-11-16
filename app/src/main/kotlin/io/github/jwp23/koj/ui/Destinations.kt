@@ -9,6 +9,9 @@ import kotlinx.serialization.Serializable
 
 @Serializable data object Sources : NavKey
 
+/** Adds a source, or edits the one with [sourceId]. */
+@Serializable data class EditSource(val sourceId: Long?) : NavKey
+
 /** Named AppSettings because Settings is the stored record. */
 @Serializable data object AppSettings : NavKey
 
