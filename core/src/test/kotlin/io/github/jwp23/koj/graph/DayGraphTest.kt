@@ -167,6 +167,83 @@ class DayGraphTest {
     }
 
     @Test
+    fun aFastDrinkIsMarkedAtOneMoment() {
+        val graph = graph(drinks = listOf(drink(espresso, at("10:00"), id = 7)))
+
+        val marker = graph.intakeMarkers.single()
+        assertEquals(7L, marker.drinkId)
+        assertEquals(at("10:00"), marker.start)
+        assertEquals(at("10:00"), marker.end)
+        assertEquals("Espresso", marker.sourceName)
+        // 1 serving x 100 mg caffeine and 0 mg L-theanine.
+        assertEquals(Amounts(100.0, 0.0), marker.taken)
+    }
+
+    @Test
+    fun aFinishedSippedDrinkIsMarkedFromStartToFinish() {
+        val finished = drink(greenTea, at("09:00"), id = 1).copy(finish = at("09:40"))
+        val graph = graph(drinks = listOf(finished))
+
+        assertEquals(at("09:40"), graph.intakeMarkers.single().end)
+    }
+
+    @Test
+    fun aSippedDrinkStillGoingIsMarkedToWhenItShouldFinish() {
+        // Started 09:00 with a 60-minute default duration: it should finish at 10:00.
+        val graph = graph(now = at("09:20"), drinks = listOf(drink(greenTea, at("09:00"), id = 1)))
+
+        assertEquals(at("10:00"), graph.intakeMarkers.single().end)
+    }
+
+    @Test
+    fun checkInsOfTheDayAreMarked() {
+        val today =
+            CheckIn(
+                id = 5,
+                at = at("11:00"),
+                zone = zone,
+                awake = 4,
+                calm = 2,
+                kind = PromptKind.FIXED_TIME,
+            )
+        val yesterday = checkIn(id = 6, at = Instant.parse("2026-03-09T11:00:00Z"))
+        val graph = graph(checkIns = listOf(today, yesterday))
+
+        assertEquals(
+            listOf(
+                CheckInMarker(checkInId = 5, at = at("11:00"), awake = 4, focus = null, calm = 2),
+            ),
+            graph.checkInMarkers,
+        )
+    }
+
+    @Test
+    fun takenAddsUpTheDaysDrinks() {
+        val drinks =
+            listOf(
+                drink(espresso, at("08:30"), id = 1),
+                drink(greenTea, at("10:00"), id = 2, servings = 0.5),
+                drink(greenTea, at("15:00"), id = 3, servings = 0.5),
+            )
+        val graph = graph(drinks = drinks)
+
+        // Caffeine 100 + 0.5 x 30 + 0.5 x 30 = 100 + 15 + 15 = 130.
+        // L-theanine 0 + 0.5 x 20 + 0.5 x 20 = 0 + 10 + 10 = 20.
+        assertEquals(Amounts(130.0, 20.0), graph.taken)
+    }
+
+    @Test
+    fun markersAreOrderedByTime() {
+        val drinks =
+            listOf(drink(espresso, at("15:00"), id = 1), drink(espresso, at("09:00"), id = 2))
+        val checkIns = listOf(checkIn(id = 3, at = at("16:00")), checkIn(id = 4, at = at("10:00")))
+        val graph = graph(drinks = drinks, checkIns = checkIns)
+
+        assertEquals(listOf(2L, 1L), graph.intakeMarkers.map { it.drinkId })
+        assertEquals(listOf(4L, 3L), graph.checkInMarkers.map { it.checkInId })
+    }
+
+    @Test
     fun peakIsTheHighestPointOfEachLine() {
         val graph = graph(drinks = listOf(drink(espresso, at("10:00"), id = 1)))
 

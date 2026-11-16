@@ -2,6 +2,7 @@ package io.github.jwp23.koj.graph
 
 import io.github.jwp23.koj.intake.Amounts
 import io.github.jwp23.koj.intake.IntakeModel
+import io.github.jwp23.koj.intake.taken
 import io.github.jwp23.koj.record.CheckIn
 import io.github.jwp23.koj.record.LoggedDrink
 import io.github.jwp23.koj.record.Settings
@@ -85,8 +86,9 @@ fun dayGraph(
     val (dayStart, dayEnd) = dayBounds(date, zone)
     require(!now.isBefore(dayStart)) { "Now, $now, is before $date starts at $dayStart" }
     val isToday = now.isBefore(dayEnd)
-    val daysDrinks = drinks.filter { it.start >= dayStart && it.start < dayEnd }
-    val daysCheckIns = checkIns.filter { it.at >= dayStart && it.at < dayEnd }
+    val daysDrinks =
+        drinks.filter { it.start >= dayStart && it.start < dayEnd }.sortedBy { it.start }
+    val daysCheckIns = checkIns.filter { it.at >= dayStart && it.at < dayEnd }.sortedBy { it.at }
     val nowIfToday = listOfNotNull(now.takeIf { isToday })
 
     val morning = date.atTime(settings.morningTime).atZone(zone).toInstant()
@@ -114,14 +116,16 @@ fun dayGraph(
         past = past,
         projection = projection,
         caffeineAtBedtimeMg = projection.lastOrNull()?.inBody?.caffeineMg,
-        intakeMarkers = emptyList(),
-        checkInMarkers = emptyList(),
+        intakeMarkers =
+            daysDrinks.map { IntakeMarker(it.id, it.start, it.end, it.sourceName, it.taken) },
+        checkInMarkers =
+            daysCheckIns.map { CheckInMarker(it.id, it.at, it.awake, it.focus, it.calm) },
         peak =
             Amounts(
                 caffeineMg = lines.maxOf { it.inBody.caffeineMg },
                 theanineMg = lines.maxOf { it.inBody.theanineMg },
             ),
-        taken = Amounts(0.0, 0.0),
+        taken = taken(daysDrinks.map { it.toDrink() }),
     )
 }
 
