@@ -1,6 +1,7 @@
 package io.github.jwp23.koj.ui.sources
 
 import android.content.Context
+import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
@@ -18,6 +19,7 @@ import java.time.Duration
 import kotlinx.coroutines.runBlocking
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNull
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -61,7 +63,22 @@ class SourcesScreenTest {
     @Test
     fun anEmptyListSaysSo() {
         show()
+        waitForText("No sources yet.")
         composeRule.onNodeWithText("No sources yet.").assertIsDisplayed()
+    }
+
+    @Test
+    fun nothingIsKnownAboutTheSourcesBeforeTheFirstRead() {
+        assertNull(SourcesViewModel(store).state.value)
+    }
+
+    @Test
+    fun theEmptyMessageIsNotShownForSavedSources() {
+        storeGreenTea()
+        show()
+        composeRule.onAllNodesWithText("No sources yet.").assertCountEquals(0)
+        waitForText("Green tea")
+        composeRule.onAllNodesWithText("No sources yet.").assertCountEquals(0)
     }
 
     @Test

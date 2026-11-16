@@ -9,9 +9,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.stateIn
 
 class SourcesViewModel(sources: SourceStore) : ViewModel() {
-    /** The sources that are not archived, by name. Empty until the first read finishes. */
-    val state: StateFlow<List<Source>> =
-        sources
-            .sources()
-            .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
+    /** The sources that are not archived, by name. Null until the first read finishes. */
+    val state: StateFlow<List<Source>?> =
+        sources.sources().stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
 }

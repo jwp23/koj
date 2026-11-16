@@ -22,14 +22,15 @@ import io.github.jwp23.koj.record.Source
 
 @Composable
 fun SourcesScreen(model: SourcesViewModel, onAdd: () -> Unit, onEdit: (Long) -> Unit) {
-    val sources by model.state.collectAsStateWithLifecycle()
+    val loaded by model.state.collectAsStateWithLifecycle()
+    val sources = loaded.orEmpty()
     Column(Modifier.padding(16.dp)) {
         Text(
             "Sources",
             style = MaterialTheme.typography.headlineMedium,
             modifier = Modifier.semantics { heading() },
         )
-        if (sources.isEmpty()) Text("No sources yet.", Modifier.padding(vertical = 8.dp))
+        if (loaded?.isEmpty() == true) Text("No sources yet.", Modifier.padding(vertical = 8.dp))
         LazyColumn(Modifier.weight(1f)) {
             items(sources, key = { it.id }) { source ->
                 Column(
