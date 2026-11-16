@@ -7,7 +7,9 @@ import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.isHeading
 import androidx.compose.ui.test.isSelectable
 import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
+import androidx.compose.ui.test.onAllNodesWithContentDescription
 import androidx.compose.ui.test.onAllNodesWithText
+import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performClick
@@ -175,5 +177,32 @@ class MainActivityTest {
         val logged = runBlocking { container.drinks.drinks().first() }
         assertEquals(listOf("Mate"), logged.map { it.sourceName })
         composeRule.onNodeWithText("Mate").assertIsDisplayed()
+    }
+
+    @Test
+    fun optionsOpensTheLogScreenAndReturns() {
+        composeRule.onNode(barItem("Sources")).performClick()
+        composeRule.onNodeWithText("Add source").performClick()
+        composeRule.onNodeWithText("Name").performTextInput("Mate")
+        composeRule.onNodeWithText("Save").performClick()
+        composeRule.waitUntil(5_000) {
+            composeRule.onAllNodesWithText("Mate").fetchSemanticsNodes().isNotEmpty()
+        }
+        composeRule.onNode(barItem("Today")).performClick()
+        composeRule.waitUntil(5_000) {
+            composeRule
+                .onAllNodesWithContentDescription("Log Mate with options")
+                .fetchSemanticsNodes()
+                .isNotEmpty()
+        }
+        composeRule.onNodeWithContentDescription("Log Mate with options").performClick()
+        composeRule.waitUntil(5_000) {
+            composeRule.onAllNodes(heading("Log Mate")).fetchSemanticsNodes().isNotEmpty()
+        }
+        composeRule.onNodeWithText("Log").performClick()
+        composeRule.waitUntil(5_000) {
+            composeRule.onAllNodes(heading("Today")).fetchSemanticsNodes().isNotEmpty()
+        }
+        composeRule.onNode(heading("Today")).assertIsDisplayed()
     }
 }

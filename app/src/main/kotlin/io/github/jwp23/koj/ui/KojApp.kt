@@ -21,6 +21,8 @@ import androidx.navigation3.runtime.rememberNavBackStack
 import androidx.navigation3.runtime.rememberSaveableStateHolderNavEntryDecorator
 import androidx.navigation3.ui.NavDisplay
 import io.github.jwp23.koj.AppContainer
+import io.github.jwp23.koj.ui.log.LogDrinkScreen
+import io.github.jwp23.koj.ui.log.LogDrinkViewModel
 import io.github.jwp23.koj.ui.settings.SettingsScreen
 import io.github.jwp23.koj.ui.settings.SettingsViewModel
 import io.github.jwp23.koj.ui.sources.EditSourceScreen
@@ -74,8 +76,7 @@ fun KojApp(container: AppContainer) {
                                             }
                                         },
                                 ),
-                                // Nothing opens yet: the Log a drink screen is a later task.
-                                onLogWithOptions = {},
+                                onLogWithOptions = { backStack.add(LogDrink(it)) },
                                 onOpenSources = { backStack.chooseBarDestination(Sources) },
                             )
                         }
@@ -103,6 +104,25 @@ fun KojApp(container: AppContainer) {
                                         },
                                 ),
                                 onDone = { backStack.removeIfOnTop(key) },
+                            )
+                        }
+                        entry<LogDrink> { key ->
+                            LogDrinkScreen(
+                                viewModel(
+                                    factory =
+                                        viewModelFactory {
+                                            initializer {
+                                                LogDrinkViewModel(
+                                                    container.sources,
+                                                    container.drinks,
+                                                    container.settings,
+                                                    container.clock,
+                                                    key.sourceId,
+                                                )
+                                            }
+                                        },
+                                ),
+                                onDone = { backStack.removeLastOrNull() },
                             )
                         }
                         entry<AppSettings> {
