@@ -1,6 +1,7 @@
 package io.github.jwp23.koj.graph
 
 import io.github.jwp23.koj.intake.Amounts
+import io.github.jwp23.koj.intake.IntakeModel
 import io.github.jwp23.koj.record.CheckIn
 import io.github.jwp23.koj.record.LoggedDrink
 import io.github.jwp23.koj.record.Settings
@@ -98,15 +99,32 @@ fun dayGraph(
         (listOf(bedtime) + daysDrinks.map { it.end } + daysCheckIns.map { it.at } + nowIfToday)
             .max()
 
+    val model = IntakeModel(settings.caffeine, settings.theanine)
+    val modelDrinks = drinks.map { it.toDrink() }
+    fun line(first: Instant, last: Instant): List<GraphPoint> =
+        pointTimes(first, last, step).map { GraphPoint(it, model.inBody(modelDrinks, it)) }
+
+    val past = line(start, if (isToday) now else end)
+    val projection = if (isToday && now.isBefore(bedtime)) line(now, bedtime) else emptyList()
+    val lines = past + projection
+
     return DayGraph(
         start = start,
         end = end,
-        past = emptyList(),
-        projection = emptyList(),
-        caffeineAtBedtimeMg = null,
+        past = past,
+        projection = projection,
+        caffeineAtBedtimeMg = projection.lastOrNull()?.inBody?.caffeineMg,
         intakeMarkers = emptyList(),
         checkInMarkers = emptyList(),
-        peak = Amounts(0.0, 0.0),
+        peak =
+            Amounts(
+                caffeineMg = lines.maxOf { it.inBody.caffeineMg },
+                theanineMg = lines.maxOf { it.inBody.theanineMg },
+            ),
         taken = Amounts(0.0, 0.0),
     )
 }
+
+/** Every [step] from [first], then [last] whether or not it falls on a step. */
+private fun pointTimes(first: Instant, last: Instant, step: Duration): List<Instant> =
+    generateSequence(first) { it.plus(step) }.takeWhile { it.isBefore(last) }.toList() + last

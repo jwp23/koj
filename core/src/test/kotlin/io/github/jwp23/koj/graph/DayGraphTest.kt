@@ -1,5 +1,7 @@
 package io.github.jwp23.koj.graph
 
+import io.github.jwp23.koj.intake.Amounts
+import io.github.jwp23.koj.intake.IntakeModel
 import io.github.jwp23.koj.intake.IntakeStyle
 import io.github.jwp23.koj.record.CheckIn
 import io.github.jwp23.koj.record.LoggedDrink
@@ -13,7 +15,9 @@ import java.time.LocalTime
 import java.time.ZoneId
 import java.time.ZoneOffset
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertThrows
+import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class DayGraphTest {
@@ -60,6 +64,21 @@ class DayGraphTest {
     ) = dayGraph(date, zone, now, settings, drinks, checkIns)
 
     @Test
+    fun aDayThatIsOverCoversMorningTimeToBedtime() {
+        val graph = graph()
+
+        assertEquals(at("08:00"), graph.start)
+        assertEquals(at("21:00"), graph.end)
+        assertEquals(graph.start, graph.past.first().at)
+        assertEquals(graph.end, graph.past.last().at)
+        // 08:00 to 21:00 is 13 hours x 12 points an hour = 156 steps, plus the first point.
+        assertEquals(157, graph.past.size)
+        assertEquals(emptyList<GraphPoint>(), graph.projection)
+        assertNull(graph.caffeineAtBedtimeMg)
+        assertTrue(graph.past.all { it.inBody == Amounts(0.0, 0.0) })
+    }
+
+    @Test
     fun anEarlyDrinkWidensTheStart() {
         val graph = graph(drinks = listOf(drink(espresso, at("06:30"), id = 1)))
 
@@ -79,6 +98,80 @@ class DayGraphTest {
         val graph = graph(drinks = listOf(drink(greenTea, at("20:30"), id = 1)))
 
         assertEquals(at("21:30"), graph.end)
+    }
+
+    @Test
+    fun todayIsSplitAtNow() {
+        val graph = graph(now = at("14:02"))
+
+        assertEquals(at("14:02"), graph.past.last().at)
+        // 08:00 to 14:00 is 72 steps, 73 points, plus 14:02.
+        assertEquals(74, graph.past.size)
+        assertEquals(at("14:02"), graph.projection.first().at)
+        assertEquals(at("21:00"), graph.projection.last().at)
+    }
+
+    @Test
+    fun todayBeforeMorningTimeStartsAtNow() {
+        val graph = graph(now = at("06:10"))
+
+        assertEquals(at("06:10"), graph.start)
+        assertEquals(listOf(GraphPoint(at("06:10"), Amounts(0.0, 0.0))), graph.past)
+    }
+
+    @Test
+    fun afterBedtimeThereIsNoProjection() {
+        val graph = graph(now = at("23:10"))
+
+        assertEquals(at("23:10"), graph.end)
+        assertEquals(emptyList<GraphPoint>(), graph.projection)
+        assertNull(graph.caffeineAtBedtimeMg)
+    }
+
+    @Test
+    fun caffeineAtBedtimeComesFromTheModel() {
+        val drink = drink(espresso, at("10:00"), id = 1)
+        val graph = graph(now = at("14:00"), drinks = listOf(drink))
+
+        val modelAtBedtime =
+            IntakeModel(settings.caffeine, settings.theanine)
+                .inBody(listOf(drink.toDrink()), at("21:00"))
+                .caffeineMg
+        assertEquals(modelAtBedtime, graph.caffeineAtBedtimeMg!!, 1e-9)
+        // 660 minutes after the dose.
+        // ka = ln2 / 7 = 0.099021 per minute; ke = ln2 / 300 = 0.0023105 per minute
+        // ka / (ka - ke) = 1.023891
+        // e^(-ke x 660) = 0.217638; e^(-ka x 660) is negligible
+        // 100 x 1.023891 x 0.217638 = 22.28
+        assertEquals(22.28, graph.caffeineAtBedtimeMg!!, 0.01)
+    }
+
+    @Test
+    fun eachPointIsTheModelsEstimateAtThatTime() {
+        val graph = graph(now = at("14:00"), drinks = listOf(drink(espresso, at("10:00"), id = 1)))
+
+        // 60 minutes after the dose; ka / (ka - ke) = 1.023891 as above.
+        // e^(-ke x 60) = 0.870551; e^(-ka x 60) = 0.002629
+        // 100 x 1.023891 x (0.870551 - 0.002629) = 88.87
+        assertEquals(88.87, graph.past.single { it.at == at("11:00") }.inBody.caffeineMg, 0.01)
+    }
+
+    @Test
+    fun yesterdaysDrinkCountsTowardsTheLinesButIsNotMarked() {
+        val yesterday = drink(espresso, Instant.parse("2026-03-09T20:00:00Z"), id = 1)
+        val graph = graph(drinks = listOf(yesterday))
+
+        assertTrue(graph.past.first().inBody.caffeineMg > 0.0)
+        assertEquals(emptyList<IntakeMarker>(), graph.intakeMarkers)
+        assertEquals(Amounts(0.0, 0.0), graph.taken)
+    }
+
+    @Test
+    fun peakIsTheHighestPointOfEachLine() {
+        val graph = graph(drinks = listOf(drink(espresso, at("10:00"), id = 1)))
+
+        assertEquals(graph.past.maxOf { it.inBody.caffeineMg }, graph.peak.caffeineMg, 0.0)
+        assertTrue(graph.peak.caffeineMg > 0.0)
     }
 
     @Test
