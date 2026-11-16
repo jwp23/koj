@@ -52,6 +52,20 @@ data class DayGraph(
                 Duration.between(start, end).toMillis()
         return fraction.coerceIn(0.0, 1.0).toFloat()
     }
+
+    /**
+     * How much of the span lies from [from] to [to]: the [position] of [to] less that of [from].
+     */
+    fun lengthBetween(from: Instant, to: Instant): Float = position(to) - position(from)
+
+    /**
+     * How high [mg] stands: 0 at the bottom, 1 at the higher of the two peaks. Everything is at the
+     * bottom when nothing is in the body all day.
+     */
+    fun level(mg: Double): Float {
+        val top = maxOf(peak.caffeineMg, peak.theanineMg)
+        return if (top == 0.0) 0f else (mg / top).toFloat()
+    }
 }
 
 // After ten elimination half-lives 2^-10 = 1/1024 is left, under a thousandth. With absorption

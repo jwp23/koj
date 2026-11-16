@@ -310,6 +310,48 @@ class DayGraphTest {
     }
 
     @Test
+    fun lengthBetweenIsTheShareOfTheSpanTwoTimesCover() {
+        val graph = graph()
+
+        // 09:00 to 09:40 is 40 minutes of the 780-minute span from 08:00 to 21:00:
+        // 40 / 780 = 0.051282.
+        assertEquals(0.051282f, graph.lengthBetween(at("09:00"), at("09:40")), 0.000001f)
+        // 08:00 to 14:30 is 6.5 of 13 hours: 0.5.
+        assertEquals(0.5f, graph.lengthBetween(at("08:00"), at("14:30")), 0f)
+        assertEquals(0f, graph.lengthBetween(at("10:00"), at("10:00")), 0f)
+        // Times outside the span count from its edge: 08:00 to 08:30 is 30 / 780 = 0.038462.
+        assertEquals(0.038462f, graph.lengthBetween(at("07:00"), at("08:30")), 0.000001f)
+    }
+
+    @Test
+    fun levelIsTheShareOfTheHigherPeak() {
+        val graph = graph().copy(peak = Amounts(caffeineMg = 100.0, theanineMg = 40.0))
+
+        assertEquals(1f, graph.level(100.0), 0f)
+        // 50 / 100 = 0.5; 40 / 100 = 0.4.
+        assertEquals(0.5f, graph.level(50.0), 0f)
+        assertEquals(0.4f, graph.level(40.0), 0f)
+        assertEquals(0f, graph.level(0.0), 0f)
+    }
+
+    @Test
+    fun theHigherPeakMayBeLTheanine() {
+        val graph = graph().copy(peak = Amounts(caffeineMg = 20.0, theanineMg = 80.0))
+
+        assertEquals(1f, graph.level(80.0), 0f)
+        // 20 / 80 = 0.25.
+        assertEquals(0.25f, graph.level(20.0), 0f)
+    }
+
+    @Test
+    fun withNothingInTheBodyEveryLevelIsTheBottom() {
+        val graph = graph()
+
+        assertEquals(Amounts(0.0, 0.0), graph.peak)
+        assertEquals(0f, graph.level(0.0), 0f)
+    }
+
+    @Test
     fun carryOverIsTenTimesTheLongerHalfLife() {
         // Defaults: caffeine 5 hours, L-theanine 65 minutes; 10 x 5 hours = 50 hours.
         assertEquals(Duration.ofHours(50), settings.carryOver())
