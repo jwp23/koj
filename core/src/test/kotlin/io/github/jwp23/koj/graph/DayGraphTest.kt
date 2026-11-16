@@ -310,6 +310,19 @@ class DayGraphTest {
     }
 
     @Test
+    fun anEmptySpanPlacesEverythingAtItsStart() {
+        // A morning time in a daylight-saving gap can move onto the bedtime instant, so the span
+        // from start to end is 0 ms long; 0 / 0 would be NaN and an offset of NaN cannot be laid
+        // out.
+        val graph = graph().copy(start = at("10:00"), end = at("10:00"))
+
+        assertEquals(0f, graph.position(at("10:00")), 0f)
+        assertEquals(0f, graph.position(at("09:00")), 0f)
+        assertEquals(0f, graph.position(at("11:00")), 0f)
+        assertEquals(0f, graph.lengthBetween(at("10:00"), at("10:00")), 0f)
+    }
+
+    @Test
     fun lengthBetweenIsTheShareOfTheSpanTwoTimesCover() {
         val graph = graph()
 

@@ -45,8 +45,12 @@ data class DayGraph(
     /** What the day's drinks dosed. */
     val taken: Amounts,
 ) {
-    /** Where [at] falls along the span: 0 at the start, 1 at the end, clamped to that range. */
+    /**
+     * Where [at] falls along the span: 0 at the start, 1 at the end, clamped to that range. On a
+     * span of no length everything is at 0.
+     */
     fun position(at: Instant): Float {
+        if (start == end) return 0f
         val fraction =
             Duration.between(start, at).toMillis().toDouble() /
                 Duration.between(start, end).toMillis()
