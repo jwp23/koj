@@ -9,8 +9,9 @@ import io.github.jwp23.koj.intake.Kinetics
 import io.github.jwp23.koj.record.Settings
 import java.time.Duration
 import java.time.LocalTime
-import kotlinx.coroutines.async
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.runTest
 import org.junit.After
 import org.junit.Assert.assertEquals
@@ -105,11 +106,23 @@ class SettingsStoreTest {
     }
 
     @Test
+    fun aSubSecondCheckInDelayIsKept() = runTest {
+        val settings = Settings(afterDrinkCheckIns = listOf(Duration.ofMillis(500)))
+
+        store.save(settings)
+
+        assertEquals(settings, store.settings().first())
+    }
+
+    @Test
     fun aChangeIsEmittedToCollectors() = runTest {
-        val emitted = async { store.settings().first { it.dailyCheckInCap == 4 } }
+        val emitted = Channel<Settings>(Channel.UNLIMITED)
+        val collector = launch { store.settings().collect { emitted.send(it) } }
 
+        assertEquals(Settings(), emitted.receive())
         store.save(Settings(dailyCheckInCap = 4))
+        assertEquals(Settings(dailyCheckInCap = 4), emitted.receive())
 
-        assertEquals(Settings(dailyCheckInCap = 4), emitted.await())
+        collector.cancel()
     }
 }

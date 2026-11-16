@@ -5,7 +5,10 @@ import androidx.room3.PrimaryKey
 import java.time.Duration
 import java.time.LocalTime
 
-/** The one row of the settings table. The two check-in lists are comma-separated whole numbers. */
+/**
+ * The one row of the settings table. The two check-in lists are comma-separated whole numbers:
+ * milliseconds, and seconds of day.
+ */
 @Entity(tableName = "settings")
 data class SettingsRow(
     @PrimaryKey val id: Int = 1,
@@ -13,7 +16,7 @@ data class SettingsRow(
     val caffeineEliminationHalfLife: Duration,
     val theanineAbsorptionHalfLife: Duration,
     val theanineEliminationHalfLife: Duration,
-    val afterDrinkCheckInSeconds: String,
+    val afterDrinkCheckInMillis: String,
     val fixedCheckInSecondsOfDay: String,
     val dailyCheckInCap: Int,
     val morningTime: LocalTime,

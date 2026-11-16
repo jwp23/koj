@@ -18,7 +18,7 @@ private fun SettingsRow.toSettings() =
     Settings(
         caffeine = Kinetics(caffeineAbsorptionHalfLife, caffeineEliminationHalfLife),
         theanine = Kinetics(theanineAbsorptionHalfLife, theanineEliminationHalfLife),
-        afterDrinkCheckIns = afterDrinkCheckInSeconds.toNumbers().map(Duration::ofSeconds),
+        afterDrinkCheckIns = afterDrinkCheckInMillis.toNumbers().map(Duration::ofMillis),
         fixedCheckInTimes = fixedCheckInSecondsOfDay.toNumbers().map(LocalTime::ofSecondOfDay),
         dailyCheckInCap = dailyCheckInCap,
         morningTime = morningTime,
@@ -33,7 +33,7 @@ private fun Settings.toRow() =
         caffeineEliminationHalfLife = caffeine.eliminationHalfLife,
         theanineAbsorptionHalfLife = theanine.absorptionHalfLife,
         theanineEliminationHalfLife = theanine.eliminationHalfLife,
-        afterDrinkCheckInSeconds = afterDrinkCheckIns.joinToString(",") { "${it.seconds}" },
+        afterDrinkCheckInMillis = afterDrinkCheckIns.joinToString(",") { "${it.toMillis()}" },
         fixedCheckInSecondsOfDay = fixedCheckInTimes.joinToString(",") { "${it.toSecondOfDay()}" },
         dailyCheckInCap = dailyCheckInCap,
         morningTime = morningTime,
