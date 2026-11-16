@@ -33,6 +33,11 @@ if ! scripts/check-format.sh; then
     exit 1
 fi
 
+if ! scripts/check-app-is-wiring.sh; then
+    echo >&2 "pre-commit: the app module holds something that is not wiring."
+    exit 1
+fi
+
 if ! scripts/audit-dependencies.sh; then
     echo >&2 "pre-commit: dependency audit failed."
     exit 1
