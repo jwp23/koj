@@ -59,6 +59,10 @@ class TodayViewModel(
                     checkIns.checkInsBetween(dayStart, dayEnd),
                 ) { allSources, recent, inProgress, todaysCheckIns ->
                     val now = clock.instant()
+                    // The day [now] falls on, which differs from [today] when the clock is set
+                    // back past midnight between ticks; a graph of a day that has not started
+                    // cannot be built. The next tick reads that day's drinks and check-ins.
+                    val graphedDay = now.atZone(zone).toLocalDate()
                     TodayState(
                         now = now,
                         zone = zone,
@@ -69,7 +73,7 @@ class TodayViewModel(
                         inProgress = inProgress,
                         graph =
                             dayGraph(
-                                today,
+                                graphedDay,
                                 zone,
                                 now,
                                 current,

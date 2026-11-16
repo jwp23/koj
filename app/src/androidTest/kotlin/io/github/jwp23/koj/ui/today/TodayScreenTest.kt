@@ -392,4 +392,17 @@ class TodayScreenTest {
         }
         waitForText("At bedtime: 4 mg caffeine")
     }
+
+    @Test
+    fun aClockSetBackPastMidnightShowsTheDayItNowReads() {
+        val (espresso, _) = saveSources()
+        clock.now = Instant.parse("2026-03-10T00:30:00Z")
+        show()
+        waitForText("Caffeine in body: 0 mg")
+        // The clock goes back to the evening before; no tick comes before the next stored drink.
+        val tenToMidnight = Instant.parse("2026-03-09T23:50:00Z")
+        clock.now = tenToMidnight
+        runBlocking { drinkStore.save(espresso.logged(1.0, tenToMidnight, ZoneOffset.UTC)) }
+        waitForDescription("Drink: Espresso at 23:50")
+    }
 }
