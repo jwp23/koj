@@ -83,7 +83,11 @@ class SettingsScreenTest {
         field("Morning time: 08:00")
         field("Quiet from: 20:00")
         field("Bedtime: 21:00")
-        field("None").assertIsDisplayed()
+        val heading = field("Check-ins at fixed times").getUnclippedBoundsInRoot()
+        val none = field("None").assertIsDisplayed().getUnclippedBoundsInRoot()
+        val add = field("Add a check-in time").getUnclippedBoundsInRoot()
+        assertTrue("None at ${none.top}, heading at ${heading.top}", heading.top < none.top)
+        assertTrue("None at ${none.top}, add at ${add.top}", none.top < add.top)
     }
 
     @Test
