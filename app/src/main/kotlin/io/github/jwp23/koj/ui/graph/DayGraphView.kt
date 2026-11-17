@@ -15,7 +15,9 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -256,7 +258,9 @@ private fun Details(title: String, lines: List<String>, onClose: () -> Unit) {
         onDismissRequest = onClose,
         confirmButton = { TextButton(onClick = onClose) { Text("Close") } },
         title = { Text(title) },
-        text = { Column { lines.forEach { Text(it) } } },
+        text = {
+            Column(Modifier.verticalScroll(rememberScrollState())) { lines.forEach { Text(it) } }
+        },
     )
 }
 

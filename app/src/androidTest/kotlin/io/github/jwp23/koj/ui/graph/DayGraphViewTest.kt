@@ -8,6 +8,7 @@ import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollTo
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.github.jwp23.koj.graph.dayGraph
 import io.github.jwp23.koj.intake.IntakeStyle
@@ -226,5 +227,16 @@ class DayGraphViewTest {
         composeRule.onNodeWithContentDescription("Drink: Espresso at 09:00").performClick()
         composeRule.onNodeWithText("Espresso").assertIsDisplayed()
         composeRule.onAllNodesWithText("Mate").assertCountEquals(0)
+    }
+
+    @Test
+    fun aLongGroupOfDrinksScrollsToItsLastDrink() {
+        val drinks =
+            (1..8).map {
+                fastSource("Supplement $it").logged(1.0, at("10:00"), zone).copy(id = it.toLong())
+            }
+        show(drinks = drinks)
+        composeRule.onNodeWithContentDescription("8 drinks at 10:00").performClick()
+        composeRule.onNodeWithText("Supplement 8").performScrollTo().assertIsDisplayed()
     }
 }
