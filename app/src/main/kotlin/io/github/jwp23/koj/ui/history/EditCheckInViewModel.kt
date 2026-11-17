@@ -20,12 +20,14 @@ sealed interface EditCheckInState {
     data object NotFound : EditCheckInState
 
     /**
-     * The stored [checkIn], the [form] being edited, and the fields the last save attempt rejected.
+     * The stored [checkIn], the [form] being edited, the fields the last save attempt rejected, and
+     * whether a save or delete is [busy] being written.
      */
     data class Editing(
         val checkIn: CheckIn,
         val form: CheckInForm,
         val errors: Set<CheckInField> = emptySet(),
+        val busy: Boolean = false,
     ) : EditCheckInState
 }
 
@@ -51,22 +53,38 @@ class EditCheckInViewModel(private val checkIns: CheckInStore, checkInId: Long) 
     /** Saves a valid form and then calls [onDone]; otherwise shows what is wrong. */
     fun save(onDone: () -> Unit) {
         val current = mutableState.value as? EditCheckInState.Editing ?: return
+        if (current.busy) return
         val errors = current.form.errors()
         mutableState.value = current.copy(errors = errors)
-        if (errors.isEmpty()) {
-            viewModelScope.launch {
-                checkIns.save(current.form.applyTo(current.checkIn))
-                onDone()
-            }
-        }
+        if (errors.isEmpty())
+            write(current, onDone) { checkIns.save(current.form.applyTo(current.checkIn)) }
     }
 
-    /** Deletes the check-in, then calls [onDone]. */
+    /** Deletes the checkIn, then calls [onDone]. */
     fun delete(onDone: () -> Unit) {
         val current = mutableState.value as? EditCheckInState.Editing ?: return
+        if (current.busy) return
+        write(current, onDone) { checkIns.delete(current.checkIn) }
+    }
+
+    /**
+     * Runs [write] and then [onDone], refusing a second save or delete until it finishes. If the
+     * checkIn no longer exists, shows that instead of calling [onDone].
+     */
+    private fun write(
+        current: EditCheckInState.Editing,
+        onDone: () -> Unit,
+        write: suspend () -> Unit,
+    ) {
+        mutableState.value = current.copy(busy = true)
         viewModelScope.launch {
-            checkIns.delete(current.checkIn)
-            onDone()
+            if (entryStillStored(write)) {
+                mutableState.value =
+                    (mutableState.value as? EditCheckInState.Editing ?: current).copy(busy = false)
+                onDone()
+            } else {
+                mutableState.value = EditCheckInState.NotFound
+            }
         }
     }
 }

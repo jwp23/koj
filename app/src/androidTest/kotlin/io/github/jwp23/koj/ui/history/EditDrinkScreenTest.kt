@@ -246,4 +246,50 @@ class EditDrinkScreenTest {
         save()
         waitFor { done }
     }
+
+    private fun loadedModel(drink: LoggedDrink): EditDrinkViewModel {
+        val model = EditDrinkViewModel(drinkStore, clock, drink.id)
+        composeRule.waitUntil(5_000) { model.state.value is EditDrinkState.Editing }
+        return model
+    }
+
+    @Test
+    fun savingTwiceBeforeTheFirstSaveFinishesWritesOnce() {
+        val model = loadedModel(saveDrink(espresso, "2026-03-10T09:00:00Z"))
+        var finished = 0
+        composeRule.runOnUiThread {
+            model.save { finished++ }
+            model.save { finished++ }
+        }
+        waitFor { finished > 0 }
+        composeRule.waitForIdle()
+        assertEquals(1, finished)
+    }
+
+    @Test
+    fun deletingTwiceBeforeTheFirstDeleteFinishesFinishesOnce() {
+        val model = loadedModel(saveDrink(espresso, "2026-03-10T09:00:00Z"))
+        var finished = 0
+        composeRule.runOnUiThread {
+            model.delete { finished++ }
+            model.delete { finished++ }
+        }
+        waitFor { finished > 0 }
+        composeRule.waitForIdle()
+        assertEquals(1, finished)
+        assertTrue(stored().isEmpty())
+    }
+
+    @Test
+    fun savingADrinkDeletedElsewhereSaysItIsNoLongerAvailable() {
+        val drink = saveDrink(espresso, "2026-03-10T09:00:00Z")
+        val model = loadedModel(drink)
+        runBlocking { drinkStore.delete(drink) }
+        composeRule.setContent { EditDrinkScreen(model, onDone = { done = true }) }
+        composeRule.onNodeWithText("Save").performClick()
+        waitForText("This drink is no longer available.")
+        assertTrue(!done)
+        composeRule.onNodeWithText("Back to History").performClick()
+        assertTrue(done)
+    }
 }

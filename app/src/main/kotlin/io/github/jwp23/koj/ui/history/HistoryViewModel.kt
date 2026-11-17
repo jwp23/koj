@@ -15,6 +15,7 @@ import io.github.jwp23.koj.storage.SettingsStore
 import io.github.jwp23.koj.ui.minuteTicks
 import java.time.Clock
 import java.time.Instant
+import kotlin.coroutines.cancellation.CancellationException
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -63,3 +64,17 @@ class HistoryViewModel(
             }
             .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
 }
+
+/**
+ * Runs [write] and reports whether it went through. False means the stored entry it changes no
+ * longer exists, such as one deleted since it was loaded; a cancellation still propagates.
+ */
+internal suspend fun entryStillStored(write: suspend () -> Unit): Boolean =
+    try {
+        write()
+        true
+    } catch (cancelled: CancellationException) {
+        throw cancelled
+    } catch (_: IllegalStateException) {
+        false
+    }

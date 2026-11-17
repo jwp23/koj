@@ -21,12 +21,14 @@ sealed interface EditDrinkState {
     data object NotFound : EditDrinkState
 
     /**
-     * The stored [drink], the [form] being edited, and the fields the last save attempt rejected.
+     * The stored [drink], the [form] being edited, the fields the last save attempt rejected, and
+     * whether a save or delete is [busy] being written.
      */
     data class Editing(
         val drink: LoggedDrink,
         val form: DrinkForm,
         val errors: Set<DrinkField> = emptySet(),
+        val busy: Boolean = false,
     ) : EditDrinkState
 }
 
@@ -56,22 +58,38 @@ class EditDrinkViewModel(
     /** Saves a valid form and then calls [onDone]; otherwise shows what is wrong. */
     fun save(onDone: () -> Unit) {
         val current = mutableState.value as? EditDrinkState.Editing ?: return
+        if (current.busy) return
         val errors = current.form.errors(current.drink.zone, clock.instant())
         mutableState.value = current.copy(errors = errors)
-        if (errors.isEmpty()) {
-            viewModelScope.launch {
-                drinks.save(current.form.applyTo(current.drink))
-                onDone()
-            }
-        }
+        if (errors.isEmpty())
+            write(current, onDone) { drinks.save(current.form.applyTo(current.drink)) }
     }
 
     /** Deletes the drink, then calls [onDone]. */
     fun delete(onDone: () -> Unit) {
         val current = mutableState.value as? EditDrinkState.Editing ?: return
+        if (current.busy) return
+        write(current, onDone) { drinks.delete(current.drink) }
+    }
+
+    /**
+     * Runs [write] and then [onDone], refusing a second save or delete until it finishes. If the
+     * drink no longer exists, shows that instead of calling [onDone].
+     */
+    private fun write(
+        current: EditDrinkState.Editing,
+        onDone: () -> Unit,
+        write: suspend () -> Unit,
+    ) {
+        mutableState.value = current.copy(busy = true)
         viewModelScope.launch {
-            drinks.delete(current.drink)
-            onDone()
+            if (entryStillStored(write)) {
+                mutableState.value =
+                    (mutableState.value as? EditDrinkState.Editing ?: current).copy(busy = false)
+                onDone()
+            } else {
+                mutableState.value = EditDrinkState.NotFound
+            }
         }
     }
 }

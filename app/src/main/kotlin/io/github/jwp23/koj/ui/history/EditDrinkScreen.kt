@@ -112,14 +112,20 @@ private fun ColumnScope.Editing(
         }
     }
     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-        Button(onClick = { model.save(onDone) }) { Text("Save") }
-        OutlinedButton(onClick = { confirmingDelete = true }) { Text("Delete") }
+        Button(onClick = { model.save(onDone) }, enabled = !state.busy) { Text("Save") }
+        OutlinedButton(onClick = { confirmingDelete = true }, enabled = !state.busy) {
+            Text("Delete")
+        }
     }
     if (confirmingDelete) {
         AlertDialog(
             onDismissRequest = { confirmingDelete = false },
             title = { Text("Delete this drink?") },
-            confirmButton = { TextButton(onClick = { model.delete(onDone) }) { Text("Delete") } },
+            confirmButton = {
+                TextButton(onClick = { model.delete(onDone) }, enabled = !state.busy) {
+                    Text("Delete")
+                }
+            },
             dismissButton = {
                 TextButton(onClick = { confirmingDelete = false }) { Text("Cancel") }
             },

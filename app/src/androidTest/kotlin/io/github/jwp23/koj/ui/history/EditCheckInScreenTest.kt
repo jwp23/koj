@@ -142,4 +142,50 @@ class EditCheckInScreenTest {
         waitFor { done }
         assertTrue(stored().isEmpty())
     }
+
+    private fun loadedModel(checkIn: CheckIn): EditCheckInViewModel {
+        val model = EditCheckInViewModel(checkInStore, checkIn.id)
+        composeRule.waitUntil(5_000) { model.state.value is EditCheckInState.Editing }
+        return model
+    }
+
+    @Test
+    fun savingTwiceBeforeTheFirstSaveFinishesWritesOnce() {
+        val model = loadedModel(saveCheckIn())
+        var finished = 0
+        composeRule.runOnUiThread {
+            model.save { finished++ }
+            model.save { finished++ }
+        }
+        waitFor { finished > 0 }
+        composeRule.waitForIdle()
+        assertEquals(1, finished)
+    }
+
+    @Test
+    fun deletingTwiceBeforeTheFirstDeleteFinishesFinishesOnce() {
+        val model = loadedModel(saveCheckIn())
+        var finished = 0
+        composeRule.runOnUiThread {
+            model.delete { finished++ }
+            model.delete { finished++ }
+        }
+        waitFor { finished > 0 }
+        composeRule.waitForIdle()
+        assertEquals(1, finished)
+        assertTrue(stored().isEmpty())
+    }
+
+    @Test
+    fun savingACheckInDeletedElsewhereSaysItIsNoLongerAvailable() {
+        val checkIn = saveCheckIn()
+        val model = loadedModel(checkIn)
+        runBlocking { checkInStore.delete(checkIn) }
+        composeRule.setContent { EditCheckInScreen(model, onDone = { done = true }) }
+        composeRule.onNodeWithText("Save").performClick()
+        waitForText("This check-in is no longer available.")
+        assertTrue(!done)
+        composeRule.onNodeWithText("Back to History").performClick()
+        assertTrue(done)
+    }
 }
