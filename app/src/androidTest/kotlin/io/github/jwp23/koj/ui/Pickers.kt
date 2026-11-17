@@ -18,3 +18,14 @@ fun SemanticsNodeInteractionsProvider.pickTime(button: String, hour: String, min
     onNodeWithContentDescription("for minutes").performTextReplacement(minute)
     onNodeWithText("OK").performClick()
 }
+
+/**
+ * Opens the calendar behind the button reading [button] and chooses [day], written as the calendar
+ * labels it, for example "Wednesday, March 11, 2026". The day must be in the month the calendar
+ * opens on.
+ */
+fun SemanticsNodeInteractionsProvider.pickDate(button: String, day: String) {
+    onNodeWithText(button).performClick()
+    onNodeWithText(day).performClick()
+    onNodeWithText("OK").performClick()
+}

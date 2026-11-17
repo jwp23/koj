@@ -12,6 +12,9 @@ import kotlinx.serialization.Serializable
 /** Adds a source, or edits the one with [sourceId]. */
 @Serializable data class EditSource(val sourceId: Long?) : NavKey
 
+/** Logs a drink of the source with [sourceId], with an amount and start the user chooses. */
+@Serializable data class LogDrink(val sourceId: Long) : NavKey
+
 /** Named AppSettings because Settings is the stored record. */
 @Serializable data object AppSettings : NavKey
 
