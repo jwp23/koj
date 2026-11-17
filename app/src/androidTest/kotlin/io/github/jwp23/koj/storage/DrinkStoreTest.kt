@@ -75,15 +75,29 @@ class DrinkStoreTest {
     }
 
     @Test
-    fun drinksStartingBetweenIncludesTheStartAndExcludesTheEnd() = runTest {
+    fun drinksTakenBetweenIncludesTheStartAndExcludesTheEnd() = runTest {
         val source = stored(espresso)
         val first = drinks.save(source.logged(1.0, nine, utc))
         val second = drinks.save(source.logged(1.0, nine.plusSeconds(3600), utc))
         drinks.save(source.logged(1.0, nine.plusSeconds(7200), utc))
 
-        val found = drinks.drinksStartingBetween(nine, nine.plusSeconds(7200)).first()
+        val found = drinks.drinksTakenBetween(nine, nine.plusSeconds(7200)).first()
 
         assertEquals(listOf(first, second), found.map { it.id })
+    }
+
+    @Test
+    fun drinksTakenBetweenIncludesSippedDrinksStillBeingSippedAtTheStart() = runTest {
+        val sip = stored(greenTea)
+        val from = nine.plusSeconds(3600)
+        val stillSipping = drinks.save(sip.logged(1.0, nine, utc).copy(finish = from))
+        val unfinished = drinks.save(sip.logged(1.0, nine.minusSeconds(60), utc))
+        drinks.save(sip.logged(1.0, nine, utc).copy(finish = from.minusSeconds(1)))
+        drinks.save(stored(espresso).logged(1.0, nine, utc))
+
+        val found = drinks.drinksTakenBetween(from, from.plusSeconds(7200)).first()
+
+        assertEquals(listOf(unfinished, stillSipping), found.map { it.id })
     }
 
     @Test

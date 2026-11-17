@@ -9,9 +9,12 @@ class DrinkStore(private val dao: DrinkDao) {
     /** Every drink, oldest first. */
     fun drinks(): Flow<List<LoggedDrink>> = dao.all().map { rows -> rows.map { it.toDrink() } }
 
-    /** Drinks that start at or after [from] and before [until], oldest first. */
-    fun drinksStartingBetween(from: Instant, until: Instant): Flow<List<LoggedDrink>> =
-        dao.startingBetween(from, until).map { rows -> rows.map { it.toDrink() } }
+    /**
+     * Drinks that start at or after [from] and before [until], oldest first, plus sipped drinks
+     * that started earlier and were still being sipped at [from] or are not finished.
+     */
+    fun drinksTakenBetween(from: Instant, until: Instant): Flow<List<LoggedDrink>> =
+        dao.takenBetween(from, until).map { rows -> rows.map { it.toDrink() } }
 
     /** Sipped drinks with no finish time, oldest first. */
     fun drinksInProgress(): Flow<List<LoggedDrink>> =

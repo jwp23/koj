@@ -26,9 +26,11 @@ interface DrinkDao {
     @Query(
         "SELECT drink.*, source.name AS sourceName FROM drink " +
             "JOIN source ON source.id = drink.sourceId " +
-            "WHERE drink.start >= :from AND drink.start < :until ORDER BY drink.start, drink.id",
+            "WHERE drink.start < :until AND (drink.start >= :from OR " +
+            "(drink.style = 'SIPPED' AND (drink.finish IS NULL OR drink.finish >= :from))) " +
+            "ORDER BY drink.start, drink.id",
     )
-    fun startingBetween(from: Instant, until: Instant): Flow<List<DrinkWithSourceName>>
+    fun takenBetween(from: Instant, until: Instant): Flow<List<DrinkWithSourceName>>
 
     @Query(
         "SELECT drink.*, source.name AS sourceName FROM drink " +

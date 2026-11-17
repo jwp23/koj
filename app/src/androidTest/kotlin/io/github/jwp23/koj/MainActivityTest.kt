@@ -20,6 +20,7 @@ import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
+import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
@@ -167,6 +168,12 @@ class MainActivityTest {
             composeRule.onAllNodesWithText("Mate").fetchSemanticsNodes().isNotEmpty()
         }
         composeRule.onNodeWithText("Mate").performClick()
+        val container = ApplicationProvider.getApplicationContext<KojApplication>().container
+        composeRule.waitUntil(5_000) {
+            runBlocking { container.drinks.drinks().first().isNotEmpty() }
+        }
+        val logged = runBlocking { container.drinks.drinks().first() }
+        assertEquals(listOf("Mate"), logged.map { it.sourceName })
         composeRule.onNodeWithText("Mate").assertIsDisplayed()
     }
 }

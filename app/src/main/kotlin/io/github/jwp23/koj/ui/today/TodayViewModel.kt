@@ -52,7 +52,7 @@ class TodayViewModel(
                 val (dayStart, dayEnd) = dayBounds(clock.instant().atZone(zone).toLocalDate(), zone)
                 combine(
                     sources.sources(),
-                    drinks.drinksStartingBetween(dayStart - current.carryOver(), dayEnd),
+                    drinks.drinksTakenBetween(dayStart - current.carryOver(), dayEnd),
                     drinks.drinksInProgress(),
                 ) { allSources, recent, inProgress ->
                     val now = clock.instant()
