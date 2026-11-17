@@ -8,6 +8,7 @@ import androidx.compose.ui.test.hasAnyAncestor
 import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.isDialog
+import androidx.compose.ui.test.isHeading
 import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithText
@@ -85,7 +86,9 @@ class EditDrinkScreenTest {
     @Test
     fun theDrinkIsShown() {
         show(saveDrink(greenTea, "2026-03-10T10:00:00Z", "2026-03-10T10:40:00Z").id)
-        waitForText("Edit Green tea")
+        waitForText("Servings")
+        composeRule.onNode(hasText("Edit drink") and isHeading()).assertIsDisplayed()
+        composeRule.onNodeWithText("Green tea").assertIsDisplayed()
         servings().assertTextEquals("Servings", "1")
         composeRule.onNodeWithText("Start date: 2026-03-10").assertIsDisplayed()
         composeRule.onNodeWithText("Start time: 10:00").assertIsDisplayed()
@@ -96,10 +99,10 @@ class EditDrinkScreenTest {
     @Test
     fun aDrinkThatIsNotThereSaysSoInsteadOfLoadingForever() {
         show(999)
-        waitForText("This drink no longer exists.")
+        waitForText("This drink is no longer available.")
         composeRule.onNodeWithText("Edit drink").assertIsDisplayed()
         composeRule.onAllNodesWithText("Servings").assertCountEquals(0)
-        composeRule.onNodeWithText("Back").performClick()
+        composeRule.onNodeWithText("Back to History").performClick()
         waitFor { done }
     }
 
@@ -107,7 +110,7 @@ class EditDrinkScreenTest {
     fun aChangedAmountAndStartAreSaved() {
         val drink = saveDrink(greenTea, "2026-03-10T10:00:00Z", "2026-03-10T10:40:00Z")
         show(drink.id)
-        waitForText("Edit Green tea")
+        waitForText("Servings")
         servings().performTextReplacement("0.5")
         composeRule.pickTime("Start time: 10:00", "09", "30")
         save()
@@ -124,7 +127,7 @@ class EditDrinkScreenTest {
     fun aFinishBeforeTheStartIsRefused() {
         val drink = saveDrink(greenTea, "2026-03-10T10:00:00Z", "2026-03-10T10:40:00Z")
         show(drink.id)
-        waitForText("Edit Green tea")
+        waitForText("Servings")
         composeRule.pickTime("Finish time: 10:40", "09", "00")
         save()
         composeRule.onNodeWithText("The finish cannot be before the start").assertIsDisplayed()
@@ -136,7 +139,7 @@ class EditDrinkScreenTest {
     fun aFinishInTheFutureIsRefused() {
         val drink = saveDrink(greenTea, "2026-03-10T10:00:00Z", "2026-03-10T10:40:00Z")
         show(drink.id)
-        waitForText("Edit Green tea")
+        waitForText("Servings")
         composeRule.pickTime("Finish time: 10:40", "14", "01")
         save()
         composeRule.onNodeWithText("The finish cannot be in the future").assertIsDisplayed()
@@ -147,7 +150,7 @@ class EditDrinkScreenTest {
     fun aStartInTheFutureIsRefused() {
         val drink = saveDrink(espresso, "2026-03-10T09:00:00Z")
         show(drink.id)
-        waitForText("Edit Espresso")
+        waitForText("Servings")
         composeRule.pickTime("Start time: 09:00", "14", "01")
         save()
         composeRule.onNodeWithText("The start cannot be in the future").assertIsDisplayed()
@@ -158,7 +161,7 @@ class EditDrinkScreenTest {
     fun aBadAmountIsRefusedWithTheLimit() {
         val drink = saveDrink(espresso, "2026-03-10T09:00:00Z")
         show(drink.id)
-        waitForText("Edit Espresso")
+        waitForText("Servings")
         servings().performTextReplacement("0")
         save()
         composeRule.onNodeWithText("Enter a number above 0").assertIsDisplayed()
@@ -171,7 +174,7 @@ class EditDrinkScreenTest {
     @Test
     fun clearingTheFinishPutsASippedDrinkBackInProgress() {
         show(saveDrink(greenTea, "2026-03-10T10:00:00Z", "2026-03-10T10:40:00Z").id)
-        waitForText("Edit Green tea")
+        waitForText("Servings")
         composeRule.onNodeWithText("Clear finish").performClick()
         composeRule.onNodeWithText("Finish date").assertIsDisplayed()
         composeRule.onNodeWithText("Finish time").assertIsDisplayed()
@@ -185,7 +188,7 @@ class EditDrinkScreenTest {
     fun aFinishWithNoDateIsRefused() {
         val drink = saveDrink(greenTea, "2026-03-10T10:00:00Z")
         show(drink.id)
-        waitForText("Edit Green tea")
+        waitForText("Servings")
         composeRule.pickTime("Finish time", "10", "40")
         save()
         composeRule.onNodeWithText("Choose a finish date").assertIsDisplayed()
@@ -196,7 +199,7 @@ class EditDrinkScreenTest {
     @Test
     fun aFastDrinkHasNoFinishFields() {
         show(saveDrink(espresso, "2026-03-10T09:00:00Z").id)
-        waitForText("Edit Espresso")
+        waitForText("Servings")
         composeRule.onAllNodesWithText("Finish", substring = true).assertCountEquals(0)
         composeRule.pickTime("Start time: 09:00", "08", "00")
         save()
@@ -209,7 +212,7 @@ class EditDrinkScreenTest {
     @Test
     fun aFastDrinkMovedLaterStillFinishesWhereItStarts() {
         show(saveDrink(espresso, "2026-03-10T09:00:00Z").id)
-        waitForText("Edit Espresso")
+        waitForText("Servings")
         composeRule.pickTime("Start time: 09:00", "13", "00")
         save()
         waitFor { done }
@@ -221,7 +224,7 @@ class EditDrinkScreenTest {
     @Test
     fun deletingAsksFirst() {
         show(saveDrink(greenTea, "2026-03-10T10:00:00Z").id)
-        waitForText("Edit Green tea")
+        waitForText("Servings")
         composeRule.onNodeWithText("Delete").performClick()
         composeRule.onNodeWithText("Delete this drink?").assertIsDisplayed()
         composeRule.onNode(dialogButton("Cancel")).performClick()
@@ -237,7 +240,7 @@ class EditDrinkScreenTest {
     fun theButtonsStayReachableBesideALongName() {
         val name = "Green tea ".repeat(60).trim()
         show(saveDrink(greenTea.copy(name = name), "2026-03-10T10:00:00Z").id)
-        waitForText("Edit $name")
+        waitForText(name)
         composeRule.onNodeWithText("Save").assertIsDisplayed()
         composeRule.onNodeWithText("Delete").assertIsDisplayed()
         save()

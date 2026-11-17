@@ -239,7 +239,7 @@ class MainActivityTest {
             composeRule.onAllNodes(row).fetchSemanticsNodes().isNotEmpty()
         }
         composeRule.onNode(row).performClick()
-        waitForText("Edit $name")
+        waitForText("Servings")
     }
 
     @Test

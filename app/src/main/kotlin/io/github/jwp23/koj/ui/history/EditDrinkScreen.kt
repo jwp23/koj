@@ -46,8 +46,8 @@ fun EditDrinkScreen(model: EditDrinkViewModel, onDone: () -> Unit) {
             }
             EditDrinkState.NotFound -> {
                 Heading("Edit drink")
-                Text("This drink no longer exists.")
-                OutlinedButton(onClick = onDone) { Text("Back") }
+                Text("This drink is no longer available.")
+                Button(onClick = onDone) { Text("Back to History") }
             }
             is EditDrinkState.Editing -> Editing(current, model, onDone)
         }
@@ -66,7 +66,8 @@ private fun ColumnScope.Editing(
         Modifier.weight(1f).verticalScroll(rememberScrollState()),
         verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
-        Heading("Edit ${state.drink.sourceName}")
+        Heading("Edit drink")
+        Text(state.drink.sourceName)
         ServingsField(
             form.servings,
             state.errors,

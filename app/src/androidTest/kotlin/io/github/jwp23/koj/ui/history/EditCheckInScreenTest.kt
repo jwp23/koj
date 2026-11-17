@@ -95,10 +95,10 @@ class EditCheckInScreenTest {
     @Test
     fun aCheckInThatIsNotThereSaysSoInsteadOfLoadingForever() {
         show(999)
-        waitForText("This check-in no longer exists.")
+        waitForText("This check-in is no longer available.")
         composeRule.onNodeWithText("Edit check-in").assertIsDisplayed()
         composeRule.onAllNodesWithText("Awake (1 to 5)").assertCountEquals(0)
-        composeRule.onNodeWithText("Back").performClick()
+        composeRule.onNodeWithText("Back to History").performClick()
         waitFor { done }
     }
 

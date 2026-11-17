@@ -44,8 +44,8 @@ fun EditCheckInScreen(model: EditCheckInViewModel, onDone: () -> Unit) {
             }
             EditCheckInState.NotFound -> {
                 Heading("Edit check-in")
-                Text("This check-in no longer exists.")
-                OutlinedButton(onClick = onDone) { Text("Back") }
+                Text("This check-in is no longer available.")
+                Button(onClick = onDone) { Text("Back to History") }
             }
             is EditCheckInState.Editing -> Editing(current, model, onDone)
         }
