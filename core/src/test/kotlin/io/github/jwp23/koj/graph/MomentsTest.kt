@@ -2,6 +2,7 @@ package io.github.jwp23.koj.graph
 
 import java.time.Instant
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertThrows
 import org.junit.Test
 
 class MomentsTest {
@@ -39,27 +40,31 @@ class MomentsTest {
         )
     }
 
+    // Drinks 1, 2 and 3 all start at 09:00, so they share a moment; the longest end, 10:00, is
+    // the moment's end. Drink 4 starts at 09:30, inside that bar, so it stays apart.
     @Test
-    fun sippedDrinksGroupOnlyWhenStartAndEndAreBothTheSame() {
+    fun drinksStartingTogetherShareOneMomentEndingWithTheirLongestEnd() {
         val moments =
             listOf(
-                    intake(1, "Tea", "09:00", "09:40"),
-                    intake(2, "Coffee", "09:00", "09:40"),
-                    intake(3, "Matcha", "09:00", "10:00"),
+                    intake(3, "Matcha", "09:00", "09:30"),
+                    intake(1, "Tea", "09:00", "10:00"),
+                    intake(2, "Espresso", "09:00"),
+                    intake(4, "Mate", "09:30"),
                 )
                 .intakeMoments()
         assertEquals(
-            listOf(listOf(1L, 2L), listOf(3L)),
+            listOf(listOf(2L, 3L, 1L), listOf(4L)),
             moments.map { m -> m.markers.map { it.drinkId } },
         )
+        assertEquals(at("09:00"), moments[0].start)
+        assertEquals(at("10:00"), moments[0].end)
+        assertEquals(at("09:30"), moments[1].end)
     }
 
     @Test
-    fun aFastAndASippedDrinkStartingTogetherStaySeparate() {
-        val moments =
-            listOf(intake(1, "Tea", "09:00", "09:40"), intake(2, "Espresso", "09:00"))
-                .intakeMoments()
-        assertEquals(2, moments.size)
+    fun aMomentWithNoMarkersIsRefused() {
+        assertThrows(IllegalArgumentException::class.java) { IntakeMoment(emptyList()) }
+        assertThrows(IllegalArgumentException::class.java) { CheckInMoment(emptyList()) }
     }
 
     @Test

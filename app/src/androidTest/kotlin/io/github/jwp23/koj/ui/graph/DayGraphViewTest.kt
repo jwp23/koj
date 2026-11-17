@@ -239,4 +239,15 @@ class DayGraphViewTest {
         composeRule.onNodeWithContentDescription("8 drinks at 10:00").performClick()
         composeRule.onNodeWithText("Supplement 8").performScrollTo().assertIsDisplayed()
     }
+
+    @Test
+    fun aSippedAndAFastDrinkStartingTogetherShareOneTarget() {
+        val espresso = espressoAt("09:00").copy(id = 3)
+        show(drinks = listOf(greenTea, espresso))
+        composeRule.onNodeWithContentDescription("2 drinks at 09:00").performClick()
+        composeRule.onNodeWithText("Green tea").assertIsDisplayed()
+        composeRule.onNodeWithText("09:00 to 09:40").assertIsDisplayed()
+        composeRule.onNodeWithText("Espresso").assertIsDisplayed()
+        composeRule.onNodeWithText("100 mg caffeine").assertIsDisplayed()
+    }
 }
