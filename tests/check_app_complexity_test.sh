@@ -81,6 +81,11 @@ check "a lambda's class is checked with its file" 1 'TodayViewModel$state$1.invo
 check "a report with no view models or stores passes and says so" 0 "no view-model or store methods" \
     "$(report "$(class TodayScreenKt TodayScreen.kt draw:1:1)")"
 
+check "the default maximum admits a method scoring 6" 0 "the maximum is 6." \
+    "$(report "$(class TodayViewModel TodayViewModel.kt a:0:6)")"
+check "the default maximum refuses a method scoring 7" 1 "scores 7, the maximum is 6" \
+    "$(report "$(class TodayViewModel TodayViewModel.kt a:0:7)")"
+
 printf '%s' "$(report "$(class TodayViewModel TodayViewModel.kt a:0:1 b:0:5 c:0:3)")" > "$work/report.xml"
 status=0
 output=$("$script" "$work/report.xml" --list 2>&1) || status=$?

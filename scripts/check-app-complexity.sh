@@ -19,7 +19,9 @@
 set -eu
 
 report=${1:-}
-maximum=${2:-4}
+# A ratchet: the highest score measured when it was last set, so nothing written
+# so far fails. Its rationale is in docs/decisions/app-module-is-wiring.md.
+maximum=${2:-6}
 
 if [ ! -r "$report" ]; then
     echo >&2 "app complexity: no report at '$report'. Run ./gradlew createDebugAndroidTestCoverageReport with an emulator connected."

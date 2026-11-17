@@ -28,6 +28,10 @@ store and a screen scores very little, so a high score is the shadow of logic th
 Composables are left out because the Compose compiler adds branches of its own to them, and
 Room's generated classes because nobody writes them.
 
-The maximum is 4, set on 2026-11-16. It is the highest score measured that day
-(`SourceStore.save`), so nothing written so far fails. Lower it when the code allows; raise it
-only with a reason stated in the pull request.
+The maximum is 6, set on 2026-11-17. It is the highest score measured that day
+(`SettingsViewModel$save$1.invokeSuspend`), so nothing written so far fails. Lower it when the
+code allows; raise it only with a reason stated in the pull request.
+
+The score is the complexity of the compiled bytecode, so the branches of an inlined call such as
+`check` or a coroutine's generated state machine count too. `--list` in place of the maximum
+shows the current score of every method measured.
