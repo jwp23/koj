@@ -79,7 +79,7 @@ fun KojApp(container: AppContainer) {
                                             }
                                         },
                                 ),
-                                onDone = { backStack.removeLastOrNull() },
+                                onDone = { backStack.removeIfOnTop(key) },
                             )
                         }
                         entry<AppSettings> { Placeholder("Settings") }
@@ -93,6 +93,11 @@ fun KojApp(container: AppContainer) {
 private fun NavBackStack<NavKey>.chooseBarDestination(key: NavKey) {
     while (size > 1) removeLast()
     if (key != Today) add(key)
+}
+
+/** Removes [key] only while it is the top destination, so a late finish cannot pop another. */
+internal fun NavBackStack<NavKey>.removeIfOnTop(key: NavKey) {
+    if (lastOrNull() == key) removeLast()
 }
 
 @Composable

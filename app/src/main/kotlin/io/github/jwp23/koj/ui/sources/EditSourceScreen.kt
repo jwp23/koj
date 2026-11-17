@@ -51,6 +51,11 @@ fun EditSourceScreen(model: EditSourceViewModel, onDone: () -> Unit) {
             style = MaterialTheme.typography.headlineMedium,
             modifier = Modifier.semantics { heading() },
         )
+        if (state.notFound) {
+            Text("This source is no longer available.")
+            Button(onClick = onDone) { Text("Back to Sources") }
+            return@Column
+        }
         if (!model.isNew && state.stored == null) {
             CircularProgressIndicator()
             return@Column
@@ -90,9 +95,11 @@ fun EditSourceScreen(model: EditSourceViewModel, onDone: () -> Unit) {
         }
         UsualTime(form) { model.change(form.copy(usualTime = it)) }
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            Button(onClick = { model.save(onDone) }) { Text("Save") }
+            Button(onClick = { model.save(onDone) }, enabled = !state.busy) { Text("Save") }
             if (state.stored != null) {
-                OutlinedButton(onClick = { confirmingDelete = true }) { Text("Delete") }
+                OutlinedButton(onClick = { confirmingDelete = true }, enabled = !state.busy) {
+                    Text("Delete")
+                }
             }
         }
     }
@@ -102,7 +109,9 @@ fun EditSourceScreen(model: EditSourceViewModel, onDone: () -> Unit) {
             onDismissRequest = { confirmingDelete = false },
             title = { Text("Delete ${stored.name}?") },
             confirmButton = {
-                TextButton(onClick = { model.delete(onDone) }) { Text("Delete") }
+                TextButton(onClick = { model.delete(onDone) }, enabled = !state.busy) {
+                    Text("Delete")
+                }
             },
             dismissButton = {
                 TextButton(onClick = { confirmingDelete = false }) { Text("Cancel") }

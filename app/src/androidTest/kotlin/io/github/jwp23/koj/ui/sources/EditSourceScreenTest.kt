@@ -16,6 +16,7 @@ import androidx.room3.Room
 import androidx.sqlite.driver.AndroidSQLiteDriver
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import io.github.jwp23.koj.form.SourceForm
 import io.github.jwp23.koj.intake.IntakeStyle
 import io.github.jwp23.koj.record.Source
 import io.github.jwp23.koj.storage.KojDatabase
@@ -173,12 +174,30 @@ class EditSourceScreenTest {
     }
 
     @Test
-    fun aSourceThatHasNotLoadedShowsNoFormToTypeInto() {
+    fun aSourceThatIsNotThereIsSaidToBeUnavailableWithAWayBack() {
         show(sourceId = 999)
+        waitForText("This source is no longer available.")
         composeRule.onNodeWithText("Edit source").assertIsDisplayed()
         composeRule.onAllNodesWithText("New source").assertCountEquals(0)
         composeRule.onAllNodesWithText("Name").assertCountEquals(0)
         composeRule.onAllNodesWithText("Save").assertCountEquals(0)
+        composeRule.onNodeWithText("Back to Sources").performClick()
+        assertTrue(done)
+    }
+
+    @Test
+    fun savingTwiceBeforeTheFirstSaveFinishesStoresOneSource() {
+        val model = EditSourceViewModel(store, null)
+        model.change(SourceForm(name = "Espresso"))
+        var finished = 0
+        composeRule.runOnUiThread {
+            model.save { finished++ }
+            model.save { finished++ }
+        }
+        waitFor { finished > 0 }
+        composeRule.waitForIdle()
+        assertEquals(1, finished)
+        assertEquals(1, stored().size)
     }
 
     @Test

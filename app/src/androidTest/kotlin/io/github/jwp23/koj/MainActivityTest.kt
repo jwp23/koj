@@ -1,6 +1,5 @@
 package io.github.jwp23.koj
 
-import android.content.Context
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsSelected
 import androidx.compose.ui.test.getUnclippedBoundsInRoot
@@ -19,6 +18,8 @@ import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat.Type.systemBars
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
@@ -27,12 +28,18 @@ import org.junit.runner.RunWith
 
 @RunWith(AndroidJUnit4::class)
 class MainActivityTest {
-    /** Starts each test with no database file, so what an earlier test saved is not listed. */
+    /**
+     * Starts each test with no sources, so what an earlier test saved is not listed. The process
+     * keeps one open database, so the sources are removed through it; deleting its file would leave
+     * the open connection serving the old rows.
+     */
     @get:Rule(order = 0)
     val freshDatabase =
         object : ExternalResource() {
             override fun before() {
-                ApplicationProvider.getApplicationContext<Context>().deleteDatabase("koj.db")
+                val sources =
+                    ApplicationProvider.getApplicationContext<KojApplication>().container.sources
+                runBlocking { sources.sources().first().forEach { sources.delete(it) } }
             }
         }
 
@@ -106,16 +113,23 @@ class MainActivityTest {
         )
     }
 
-    @Test
-    fun aSourceCanBeAddedFromTheSourcesTab() {
+    /** Adds a source from an empty list, which fails when an earlier test's source was kept. */
+    private fun addSourceToAnEmptyList(name: String) {
         composeRule.onNode(barItem("Sources")).performClick()
+        composeRule.waitUntil(5_000) {
+            composeRule.onAllNodesWithText("No sources yet.").fetchSemanticsNodes().isNotEmpty()
+        }
         composeRule.onNodeWithText("Add source").performClick()
-        composeRule.onNodeWithText("Name").performTextInput("Mate")
+        composeRule.onNodeWithText("Name").performTextInput(name)
         composeRule.onNodeWithText("Save").performClick()
         composeRule.waitUntil(5_000) {
-            composeRule.onAllNodesWithText("Mate").fetchSemanticsNodes().isNotEmpty()
+            composeRule.onAllNodesWithText(name).fetchSemanticsNodes().isNotEmpty()
         }
         composeRule.onNode(heading("Sources")).assertIsDisplayed()
-        composeRule.onNodeWithText("Mate").assertIsDisplayed()
+        composeRule.onNodeWithText(name).assertIsDisplayed()
     }
+
+    @Test fun aSourceCanBeAddedFromTheSourcesTab() = addSourceToAnEmptyList("Mate")
+
+    @Test fun aSourceAddedByAnotherTestIsNotListed() = addSourceToAnEmptyList("Chai")
 }
