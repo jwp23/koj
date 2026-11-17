@@ -143,7 +143,7 @@ class DayGraphTest {
         // ka / (ka - ke) = 1.023891
         // e^(-ke x 660) = 0.217638; e^(-ka x 660) is negligible
         // 100 x 1.023891 x 0.217638 = 22.28
-        assertEquals(22.28, graph.caffeineAtBedtimeMg!!, 0.01)
+        assertEquals(22.28, graph.caffeineAtBedtimeMg, 0.01)
     }
 
     @Test
@@ -307,6 +307,61 @@ class DayGraphTest {
         assertEquals(0.5f, graph.position(at("14:30")), 0f)
         assertEquals(0f, graph.position(at("07:00")), 0f)
         assertEquals(1f, graph.position(at("22:00")), 0f)
+    }
+
+    @Test
+    fun anEmptySpanPlacesEverythingAtItsStart() {
+        // A morning time in a daylight-saving gap can move onto the bedtime instant, so the span
+        // from start to end is 0 ms long; 0 / 0 would be NaN and an offset of NaN cannot be laid
+        // out.
+        val graph = graph().copy(start = at("10:00"), end = at("10:00"))
+
+        assertEquals(0f, graph.position(at("10:00")), 0f)
+        assertEquals(0f, graph.position(at("09:00")), 0f)
+        assertEquals(0f, graph.position(at("11:00")), 0f)
+        assertEquals(0f, graph.lengthBetween(at("10:00"), at("10:00")), 0f)
+    }
+
+    @Test
+    fun lengthBetweenIsTheShareOfTheSpanTwoTimesCover() {
+        val graph = graph()
+
+        // 09:00 to 09:40 is 40 minutes of the 780-minute span from 08:00 to 21:00:
+        // 40 / 780 = 0.051282.
+        assertEquals(0.051282f, graph.lengthBetween(at("09:00"), at("09:40")), 0.000001f)
+        // 08:00 to 14:30 is 6.5 of 13 hours: 0.5.
+        assertEquals(0.5f, graph.lengthBetween(at("08:00"), at("14:30")), 0f)
+        assertEquals(0f, graph.lengthBetween(at("10:00"), at("10:00")), 0f)
+        // Times outside the span count from its edge: 08:00 to 08:30 is 30 / 780 = 0.038462.
+        assertEquals(0.038462f, graph.lengthBetween(at("07:00"), at("08:30")), 0.000001f)
+    }
+
+    @Test
+    fun levelIsTheShareOfTheHigherPeak() {
+        val graph = graph().copy(peak = Amounts(caffeineMg = 100.0, theanineMg = 40.0))
+
+        assertEquals(1f, graph.level(100.0), 0f)
+        // 50 / 100 = 0.5; 40 / 100 = 0.4.
+        assertEquals(0.5f, graph.level(50.0), 0f)
+        assertEquals(0.4f, graph.level(40.0), 0f)
+        assertEquals(0f, graph.level(0.0), 0f)
+    }
+
+    @Test
+    fun theHigherPeakMayBeLTheanine() {
+        val graph = graph().copy(peak = Amounts(caffeineMg = 20.0, theanineMg = 80.0))
+
+        assertEquals(1f, graph.level(80.0), 0f)
+        // 20 / 80 = 0.25.
+        assertEquals(0.25f, graph.level(20.0), 0f)
+    }
+
+    @Test
+    fun withNothingInTheBodyEveryLevelIsTheBottom() {
+        val graph = graph()
+
+        assertEquals(Amounts(0.0, 0.0), graph.peak)
+        assertEquals(0f, graph.level(0.0), 0f)
     }
 
     @Test

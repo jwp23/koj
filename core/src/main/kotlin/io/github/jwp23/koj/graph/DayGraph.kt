@@ -45,12 +45,30 @@ data class DayGraph(
     /** What the day's drinks dosed. */
     val taken: Amounts,
 ) {
-    /** Where [at] falls along the span: 0 at the start, 1 at the end, clamped to that range. */
+    /**
+     * Where [at] falls along the span: 0 at the start, 1 at the end, clamped to that range. On a
+     * span of no length everything is at 0.
+     */
     fun position(at: Instant): Float {
+        if (start == end) return 0f
         val fraction =
             Duration.between(start, at).toMillis().toDouble() /
                 Duration.between(start, end).toMillis()
         return fraction.coerceIn(0.0, 1.0).toFloat()
+    }
+
+    /**
+     * How much of the span lies from [from] to [to]: the [position] of [to] less that of [from].
+     */
+    fun lengthBetween(from: Instant, to: Instant): Float = position(to) - position(from)
+
+    /**
+     * How high [mg] stands: 0 at the bottom, 1 at the higher of the two peaks. Everything is at the
+     * bottom when nothing is in the body all day.
+     */
+    fun level(mg: Double): Float {
+        val top = maxOf(peak.caffeineMg, peak.theanineMg)
+        return if (top == 0.0) 0f else (mg / top).toFloat()
     }
 }
 

@@ -2,13 +2,15 @@ package io.github.jwp23.koj.ui.today
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import io.github.jwp23.koj.graph.DayGraph
 import io.github.jwp23.koj.graph.carryOver
 import io.github.jwp23.koj.graph.dayBounds
+import io.github.jwp23.koj.graph.dayGraph
 import io.github.jwp23.koj.intake.Amounts
 import io.github.jwp23.koj.intake.IntakeModel
 import io.github.jwp23.koj.record.LoggedDrink
-import io.github.jwp23.koj.record.Settings
 import io.github.jwp23.koj.record.Source
+import io.github.jwp23.koj.storage.CheckInStore
 import io.github.jwp23.koj.storage.DrinkStore
 import io.github.jwp23.koj.storage.SettingsStore
 import io.github.jwp23.koj.storage.SourceStore
@@ -31,14 +33,13 @@ data class TodayState(
     val inBody: Amounts,
     val sources: List<Source>,
     val inProgress: List<LoggedDrink>,
-    /** Today's drinks plus earlier ones that may not have cleared; the graph task reads this. */
-    val drinks: List<LoggedDrink>,
-    val settings: Settings,
+    val graph: DayGraph,
 )
 
 class TodayViewModel(
     sources: SourceStore,
     private val drinks: DrinkStore,
+    checkIns: CheckInStore,
     settings: SettingsStore,
     private val clock: Clock,
     ticks: Flow<Unit> = minuteTicks(),
@@ -49,13 +50,19 @@ class TodayViewModel(
         combine(settings.settings(), ticks) { current, _ -> current }
             .flatMapLatest { current ->
                 val zone = clock.zone
-                val (dayStart, dayEnd) = dayBounds(clock.instant().atZone(zone).toLocalDate(), zone)
+                val today = clock.instant().atZone(zone).toLocalDate()
+                val (dayStart, dayEnd) = dayBounds(today, zone)
                 combine(
                     sources.sources(),
                     drinks.drinksTakenBetween(dayStart - current.carryOver(), dayEnd),
                     drinks.drinksInProgress(),
-                ) { allSources, recent, inProgress ->
+                    checkIns.checkInsBetween(dayStart, dayEnd),
+                ) { allSources, recent, inProgress, todaysCheckIns ->
                     val now = clock.instant()
+                    // The day [now] falls on, which differs from [today] when the clock is set
+                    // back past midnight between ticks; a graph of a day that has not started
+                    // cannot be built. The next tick reads that day's drinks and check-ins.
+                    val graphedDay = now.atZone(zone).toLocalDate()
                     TodayState(
                         now = now,
                         zone = zone,
@@ -64,8 +71,15 @@ class TodayViewModel(
                                 .inBody(recent.map { it.toDrink() }, now),
                         sources = allSources,
                         inProgress = inProgress,
-                        drinks = recent,
-                        settings = current,
+                        graph =
+                            dayGraph(
+                                graphedDay,
+                                zone,
+                                now,
+                                current,
+                                recent,
+                                todaysCheckIns,
+                            ),
                     )
                 }
             }
