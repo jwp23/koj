@@ -267,6 +267,18 @@ class EditDrinkScreenTest {
     }
 
     @Test
+    fun anEditMadeWhileASaveIsBeingWrittenIsNotTaken() {
+        val model = loadedModel(saveDrink(espresso, "2026-03-10T09:00:00Z"))
+        val written = (model.state.value as EditDrinkState.Editing).form
+        composeRule.runOnUiThread {
+            model.save {}
+            model.change(written.copy(servings = "3"))
+        }
+        assertEquals(written, (model.state.value as EditDrinkState.Editing).form)
+        composeRule.waitForIdle()
+    }
+
+    @Test
     fun deletingTwiceBeforeTheFirstDeleteFinishesFinishesOnce() {
         val model = loadedModel(saveDrink(espresso, "2026-03-10T09:00:00Z"))
         var finished = 0

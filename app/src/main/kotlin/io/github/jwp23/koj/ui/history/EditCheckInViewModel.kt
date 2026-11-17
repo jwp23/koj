@@ -45,8 +45,10 @@ class EditCheckInViewModel(private val checkIns: CheckInStore, checkInId: Long) 
         }
     }
 
+    /** Takes [form] as the edit, unless a save or delete is being written and would discard it. */
     fun change(form: CheckInForm) {
         val current = mutableState.value as? EditCheckInState.Editing ?: return
+        if (current.busy) return
         mutableState.value = current.copy(form = form)
     }
 

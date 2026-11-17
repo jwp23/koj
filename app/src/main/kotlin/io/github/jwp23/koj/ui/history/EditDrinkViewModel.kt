@@ -50,8 +50,10 @@ class EditDrinkViewModel(
         }
     }
 
+    /** Takes [form] as the edit, unless a save or delete is being written and would discard it. */
     fun change(form: DrinkForm) {
         val current = mutableState.value as? EditDrinkState.Editing ?: return
+        if (current.busy) return
         mutableState.value = current.copy(form = form)
     }
 

@@ -163,6 +163,18 @@ class EditCheckInScreenTest {
     }
 
     @Test
+    fun anEditMadeWhileASaveIsBeingWrittenIsNotTaken() {
+        val model = loadedModel(saveCheckIn())
+        val written = (model.state.value as EditCheckInState.Editing).form
+        composeRule.runOnUiThread {
+            model.save {}
+            model.change(written.copy(focus = "3"))
+        }
+        assertEquals(written, (model.state.value as EditCheckInState.Editing).form)
+        composeRule.waitForIdle()
+    }
+
+    @Test
     fun deletingTwiceBeforeTheFirstDeleteFinishesFinishesOnce() {
         val model = loadedModel(saveCheckIn())
         var finished = 0
