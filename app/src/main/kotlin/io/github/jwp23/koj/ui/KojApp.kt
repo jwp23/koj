@@ -8,8 +8,6 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.semantics.heading
-import androidx.compose.ui.semantics.semantics
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.navigation3.rememberViewModelStoreNavEntryDecorator
@@ -208,13 +206,4 @@ private fun NavBackStack<NavKey>.chooseBarDestination(key: NavKey) {
 /** Removes [key] only while it is the top destination, so a late finish cannot pop another. */
 internal fun NavBackStack<NavKey>.removeIfOnTop(key: NavKey) {
     if (lastOrNull() == key) removeLast()
-}
-
-@Composable
-private fun Placeholder(name: String) {
-    Text(
-        name,
-        style = MaterialTheme.typography.headlineMedium,
-        modifier = Modifier.semantics { heading() },
-    )
 }
