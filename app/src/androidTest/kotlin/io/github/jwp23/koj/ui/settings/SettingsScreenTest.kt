@@ -23,6 +23,9 @@ import io.github.jwp23.koj.storage.SettingsStore
 import io.github.jwp23.koj.ui.pickTime
 import java.time.Duration
 import java.time.LocalTime
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.StandardTestDispatcher
@@ -78,7 +81,7 @@ class SettingsScreenTest {
     @Test
     fun aFreshInstallShowsTheDefaults() {
         show()
-        waitForText("Settings")
+        waitForText("Caffeine half-life (hours)")
         fieldHolding("Caffeine half-life (hours)", "5").assertIsDisplayed()
         field("Morning time: 08:00")
         field("Quiet from: 20:00")
@@ -230,6 +233,46 @@ class SettingsScreenTest {
         composeRule.onAllNodesWithText("10:00").assertCountEquals(0)
         save()
         composeRule.waitUntil(5_000) { stored().fixedCheckInTimes == listOf(LocalTime.of(15, 30)) }
+    }
+
+    @Test
+    fun anEarlierSaveFinishingLateDoesNotMarkALaterEditSaved() {
+        val writeGate = TestCoroutineScheduler()
+        val gatedDatabase =
+            Room.inMemoryDatabaseBuilder<KojDatabase>(
+                    ApplicationProvider.getApplicationContext<Context>(),
+                )
+                .setDriver(AndroidSQLiteDriver())
+                .setQueryCoroutineContext(StandardTestDispatcher(writeGate))
+                .build()
+        try {
+            val gatedStore = SettingsStore(gatedDatabase.settingsDao())
+            val model = SettingsViewModel(gatedStore)
+            composeRule.setContent { SettingsScreen(model) }
+            composeRule.waitUntil(5_000) {
+                writeGate.advanceUntilIdle()
+                composeRule
+                    .onAllNodesWithText("Caffeine half-life (hours)")
+                    .fetchSemanticsNodes()
+                    .isNotEmpty()
+            }
+            field("Full check-ins per day, at most").performTextReplacement("4")
+            save()
+            field("Full check-ins per day, at most").performTextReplacement("5")
+            save()
+            field("Full check-ins per day, at most").performTextReplacement("4")
+            writeGate.advanceUntilIdle()
+            composeRule.waitForIdle()
+            composeRule.onAllNodesWithText("Saved").assertCountEquals(0)
+            val read = CoroutineScope(Dispatchers.Default).async { gatedStore.settings().first() }
+            composeRule.waitUntil(5_000) {
+                writeGate.advanceUntilIdle()
+                read.isCompleted
+            }
+            assertEquals(5, runBlocking { read.await() }.dailyCheckInCap)
+        } finally {
+            gatedDatabase.close()
+        }
     }
 
     @Test

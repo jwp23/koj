@@ -23,6 +23,7 @@ data class SettingsState(
 
 class SettingsViewModel(private val settings: SettingsStore) : ViewModel() {
     private val mutableState = MutableStateFlow<SettingsState?>(null)
+    private var latestSave = 0
 
     /** Null until the stored settings have been read. */
     val state: StateFlow<SettingsState?> = mutableState
@@ -43,11 +44,15 @@ class SettingsViewModel(private val settings: SettingsStore) : ViewModel() {
         val errors = current.form.errors()
         mutableState.value = current.copy(errors = errors, saved = false)
         if (errors.isEmpty()) {
+            val attempt = ++latestSave
             viewModelScope.launch {
                 settings.save(current.form.toSettings())
-                mutableState.value =
-                    mutableState.value?.takeIf { it.form == current.form }?.copy(saved = true)
-                        ?: mutableState.value
+                // An earlier save finishing late must not mark a later attempt's form saved.
+                if (attempt == latestSave) {
+                    mutableState.value =
+                        mutableState.value?.takeIf { it.form == current.form }?.copy(saved = true)
+                            ?: mutableState.value
+                }
             }
         }
     }
