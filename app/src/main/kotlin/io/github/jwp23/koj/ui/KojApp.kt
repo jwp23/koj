@@ -122,7 +122,7 @@ fun KojApp(container: AppContainer) {
                                             }
                                         },
                                 ),
-                                onDone = { backStack.removeLastOrNull() },
+                                onDone = { backStack.removeIfOnTop(key) },
                             )
                         }
                         entry<AppSettings> {

@@ -28,6 +28,8 @@ import io.github.jwp23.koj.ui.pickDate
 import io.github.jwp23.koj.ui.pickTime
 import java.time.Duration
 import java.time.Instant
+import java.time.ZoneId
+import java.time.ZoneOffset
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import org.junit.After
@@ -68,9 +70,10 @@ class LogDrinkScreenTest {
         )
     }
 
-    private fun show(sourceId: Long = saveSource()) {
+    private fun show(sourceId: Long = saveSource()): LogDrinkViewModel {
         val model = LogDrinkViewModel(sourceStore, drinkStore, settingsStore, clock, sourceId)
         composeRule.setContent { LogDrinkScreen(model, onDone = { done = true }) }
+        return model
     }
 
     private fun stored(): List<LoggedDrink> = runBlocking { drinkStore.drinks().first() }
@@ -213,5 +216,32 @@ class LogDrinkScreenTest {
         log()
         composeRule.waitUntil(5_000) { done }
         assertEquals(1, stored().size)
+    }
+
+    @Test
+    fun tappingLogTwiceLogsOneDrink() {
+        val model = show()
+        waitForText("Log Green tea")
+        var finished = 0
+        composeRule.runOnUiThread {
+            model.log { finished++ }
+            model.log { finished++ }
+        }
+        composeRule.waitUntil(5_000) { finished > 0 }
+        composeRule.waitForIdle()
+        assertEquals(1, stored().size)
+        assertEquals(1, finished)
+    }
+
+    @Test
+    fun theFormKeepsTheZoneItWasOpenedIn() {
+        show()
+        waitForText("Log Green tea")
+        clock.moveTo(ZoneId.of("Pacific/Auckland"))
+        log()
+        composeRule.waitUntil(5_000) { done }
+        val drink = stored().single()
+        assertEquals(Instant.parse("2026-03-10T10:00:00Z"), drink.start)
+        assertEquals(ZoneOffset.UTC, drink.zone)
     }
 }
