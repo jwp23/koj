@@ -95,11 +95,19 @@ fun dayGraph(
     val morning = date.atTime(settings.morningTime).atZone(zone).toInstant()
     val bedtimeDate = if (settings.bedtime.isAfter(settings.morningTime)) date else date.plusDays(1)
     val bedtime = bedtimeDate.atTime(settings.bedtime).atZone(zone).toInstant()
+    // A morning time inside a daylight-saving gap resolves to after bedtime, so both bound each
+    // end.
     val start =
-        (listOf(morning) + daysDrinks.map { it.start } + daysCheckIns.map { it.at } + nowIfToday)
+        (listOf(morning, bedtime) +
+                daysDrinks.map { it.start } +
+                daysCheckIns.map { it.at } +
+                nowIfToday)
             .min()
     val end =
-        (listOf(bedtime) + daysDrinks.map { it.end } + daysCheckIns.map { it.at } + nowIfToday)
+        (listOf(morning, bedtime) +
+                daysDrinks.map { it.end } +
+                daysCheckIns.map { it.at } +
+                nowIfToday)
             .max()
 
     val model = IntakeModel(settings.caffeine, settings.theanine)

@@ -275,6 +275,29 @@ class DayGraphTest {
     }
 
     @Test
+    fun aMorningTimeInADaylightSavingGapStillGivesAForwardSpan() {
+        // 02:30 does not exist in New York on 2026-03-08 (clocks go 02:00 -> 03:00), so it is
+        // read as 03:30, after the 03:00 bedtime.
+        val springForward = LocalDate.of(2026, 3, 8)
+        val newYork = ZoneId.of("America/New_York")
+        val gapSettings =
+            settings.copy(morningTime = LocalTime.of(2, 30), bedtime = LocalTime.of(3, 0))
+        val graph =
+            dayGraph(
+                springForward,
+                newYork,
+                Instant.parse("2026-03-10T00:00:00Z"),
+                gapSettings,
+                emptyList(),
+                emptyList(),
+            )
+
+        assertEquals(Instant.parse("2026-03-08T07:00:00Z"), graph.start)
+        assertEquals(Instant.parse("2026-03-08T07:30:00Z"), graph.end)
+        assertTrue(graph.past.all { it.at >= graph.start && it.at <= graph.end })
+    }
+
+    @Test
     fun positionRunsFromZeroToOneAlongTheSpan() {
         val graph = graph()
 
