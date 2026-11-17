@@ -4,8 +4,10 @@ import android.content.Context
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.getUnclippedBoundsInRoot
+import androidx.compose.ui.test.hasAnyAncestor
 import androidx.compose.ui.test.hasScrollAction
 import androidx.compose.ui.test.hasText
+import androidx.compose.ui.test.isDialog
 import androidx.compose.ui.test.isHeading
 import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onAllNodesWithContentDescription
@@ -213,5 +215,17 @@ class HistoryScreenTest {
         composeRule.onNode(hasScrollAction()).performScrollToNode(hasText("2026-02-01"))
         composeRule.onNodeWithText("2026-02-01").assertIsDisplayed()
         composeRule.onNode(hasText("History") and isHeading()).assertIsDisplayed()
+    }
+
+    @Test
+    fun twoDrinksStartingTogetherOnAPastDayShareOneGraphTargetThatShowsBoth() {
+        saveDrink(espresso, "2026-03-09T09:00:00Z")
+        saveDrink(espresso.copy(name = "Mate"), "2026-03-09T09:00:00Z")
+        show()
+        waitForText("09:00 Mate × 1")
+        composeRule.onNodeWithContentDescription("2 drinks at 09:00").performClick()
+        val inDialog = hasAnyAncestor(isDialog())
+        composeRule.onNode(hasText("Espresso") and inDialog).assertIsDisplayed()
+        composeRule.onNode(hasText("Mate") and inDialog).assertIsDisplayed()
     }
 }
