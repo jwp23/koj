@@ -7,21 +7,43 @@ import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.isHeading
 import androidx.compose.ui.test.isSelectable
 import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
+import androidx.compose.ui.test.onAllNodesWithText
+import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.unit.Density
 import androidx.core.graphics.Insets
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat.Type.systemBars
+import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
+import org.junit.rules.ExternalResource
 import org.junit.runner.RunWith
 
 @RunWith(AndroidJUnit4::class)
 class MainActivityTest {
-    @get:Rule val composeRule = createAndroidComposeRule<MainActivity>()
+    /**
+     * Starts each test with no sources, so what an earlier test saved is not listed. The process
+     * keeps one open database, so the sources are removed through it; deleting its file would leave
+     * the open connection serving the old rows.
+     */
+    @get:Rule(order = 0)
+    val freshDatabase =
+        object : ExternalResource() {
+            override fun before() {
+                val sources =
+                    ApplicationProvider.getApplicationContext<KojApplication>().container.sources
+                runBlocking { sources.sources().first().forEach { sources.delete(it) } }
+            }
+        }
+
+    @get:Rule(order = 1) val composeRule = createAndroidComposeRule<MainActivity>()
 
     private fun heading(text: String) = hasText(text) and isHeading()
 
@@ -90,4 +112,24 @@ class MainActivityTest {
             bar.bottom <= root.bottom - bottomInset,
         )
     }
+
+    /** Adds a source from an empty list, which fails when an earlier test's source was kept. */
+    private fun addSourceToAnEmptyList(name: String) {
+        composeRule.onNode(barItem("Sources")).performClick()
+        composeRule.waitUntil(5_000) {
+            composeRule.onAllNodesWithText("No sources yet.").fetchSemanticsNodes().isNotEmpty()
+        }
+        composeRule.onNodeWithText("Add source").performClick()
+        composeRule.onNodeWithText("Name").performTextInput(name)
+        composeRule.onNodeWithText("Save").performClick()
+        composeRule.waitUntil(5_000) {
+            composeRule.onAllNodesWithText(name).fetchSemanticsNodes().isNotEmpty()
+        }
+        composeRule.onNode(heading("Sources")).assertIsDisplayed()
+        composeRule.onNodeWithText(name).assertIsDisplayed()
+    }
+
+    @Test fun aSourceCanBeAddedFromTheSourcesTab() = addSourceToAnEmptyList("Mate")
+
+    @Test fun aSourceAddedByAnotherTestIsNotListed() = addSourceToAnEmptyList("Chai")
 }
