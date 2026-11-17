@@ -7,7 +7,8 @@
 # pushed: <local ref> <local object name> <remote ref> <remote object name>.
 #
 # The push is blocked when the device tests are needed and no emulator or
-# device is connected to run them.
+# device is connected to run them. It is also blocked when the device tests
+# cover less than the minimum line coverage of the app module's handwritten code.
 set -eu
 
 remote=$1
@@ -69,7 +70,10 @@ if ! "$adb" devices | grep -q "$(printf '\tdevice$')"; then
     exit 1
 fi
 
-if ! ./gradlew --quiet connectedAndroidTest; then
+# Runs the device tests and writes the coverage report the next check reads.
+if ! ./gradlew --quiet createDebugAndroidTestCoverageReport; then
     echo >&2 "pre-push: device tests failed."
     exit 1
 fi
+
+scripts/check-device-coverage.sh app/build/reports/coverage/androidTest/debug/connected/report.xml

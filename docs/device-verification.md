@@ -86,8 +86,16 @@ The report is `app/build/reports/androidTests/connected/debug/index.html`.
 
 With no emulator or device connected the task fails with `No connected devices!`.
 
-The `pre-push` hook runs this command when a push changes anything under `app/`, and blocks the
-push when nothing is connected.
+To check how much of the app module the device tests cover, run this instead:
+
+```sh
+./gradlew createDebugAndroidTestCoverageReport
+```
+
+Its HTML report is `app/build/reports/coverage/androidTest/debug/connected/index.html`.
+
+The `pre-push` hook runs this coverage form when a push changes anything under `app/`, and blocks
+the push when nothing is connected or when coverage is below 80 percent.
 
 ## Stop the Emulator
 
