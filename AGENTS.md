@@ -124,9 +124,14 @@ NEVER skip, evade, or disable a hook.
 
 ## Issue Tracking
 
-Report bugs and propose features as GitHub issues. Work that changes behaviour should trace back
-to one. Agents working in the repository track their own tasks and persistent memory in beads,
-as the block below directs.
+GitHub issues are for people outside the work: a contributor reports a bug or proposes a feature
+there. Agents working in the repository track every piece of work they do or find in beads, as
+the block below directs, and never open a GitHub issue for it. That covers bugs found while
+working, follow-ups, and review findings deferred out of a pull request: each becomes a bead. When
+the work answers a contributor's GitHub issue, name the issue number in the bead and in the pull
+request.
+Beads live in the local Dolt database, so when a session creates beads its handoff lists their
+IDs and says whether `bd dolt push` ran.
 
 <!-- BEGIN BEADS INTEGRATION v:1 profile:minimal hash:1105d646 -->
 ## Beads Issue Tracker
