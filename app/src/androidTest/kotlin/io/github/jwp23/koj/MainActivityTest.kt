@@ -3,7 +3,11 @@ package io.github.jwp23.koj
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsSelected
 import androidx.compose.ui.test.getUnclippedBoundsInRoot
+import androidx.compose.ui.test.hasAnyAncestor
+import androidx.compose.ui.test.hasContentDescription
+import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.hasText
+import androidx.compose.ui.test.isDialog
 import androidx.compose.ui.test.isHeading
 import androidx.compose.ui.test.isSelectable
 import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
@@ -14,6 +18,7 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTextInput
+import androidx.compose.ui.test.performTextReplacement
 import androidx.compose.ui.unit.Density
 import androidx.core.graphics.Insets
 import androidx.core.view.ViewCompat
@@ -204,5 +209,53 @@ class MainActivityTest {
             composeRule.onAllNodes(heading("Today")).fetchSemanticsNodes().isNotEmpty()
         }
         composeRule.onNode(heading("Today")).assertIsDisplayed()
+    }
+
+    private fun waitForText(text: String, substring: Boolean = false) =
+        composeRule.waitUntil(5_000) {
+            composeRule
+                .onAllNodesWithText(text, substring = substring)
+                .fetchSemanticsNodes()
+                .isNotEmpty()
+        }
+
+    private fun addSource(name: String) {
+        composeRule.onNode(barItem("Sources")).performClick()
+        composeRule.onNodeWithText("Add source").performClick()
+        composeRule.onNodeWithText("Name").performTextInput(name)
+        composeRule.onNodeWithText("Save").performClick()
+        waitForText(name)
+    }
+
+    /** Adds a source, logs one serving of it from Today, and opens its row in History. */
+    private fun openLoggedDrinkInHistory(name: String) {
+        addSource(name)
+        composeRule.onNode(barItem("Today")).performClick()
+        waitForText(name)
+        composeRule.onNodeWithText(name).performClick()
+        composeRule.onNode(barItem("History")).performClick()
+        val row = hasContentDescription("Edit $name at", substring = true)
+        composeRule.waitUntil(5_000) {
+            composeRule.onAllNodes(row).fetchSemanticsNodes().isNotEmpty()
+        }
+        composeRule.onNode(row).performClick()
+        waitForText("Servings")
+    }
+
+    @Test
+    fun aLoggedDrinkCanBeCorrectedFromHistory() {
+        openLoggedDrinkInHistory("Mate")
+        composeRule.onNode(hasSetTextAction() and hasText("Servings")).performTextReplacement("2")
+        composeRule.onNodeWithText("Save").performClick()
+        waitForText("Mate × 2", substring = true)
+        composeRule.onNode(heading("History")).assertIsDisplayed()
+    }
+
+    @Test
+    fun aLoggedDrinkCanBeDeletedFromHistory() {
+        openLoggedDrinkInHistory("Mate")
+        composeRule.onNodeWithText("Delete").performClick()
+        composeRule.onNode(hasText("Delete") and hasAnyAncestor(isDialog())).performClick()
+        waitForText("Nothing logged yet.")
     }
 }

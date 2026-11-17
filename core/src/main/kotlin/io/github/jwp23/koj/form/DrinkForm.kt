@@ -1,5 +1,6 @@
 package io.github.jwp23.koj.form
 
+import io.github.jwp23.koj.intake.IntakeStyle
 import io.github.jwp23.koj.record.LoggedDrink
 import java.time.Instant
 import java.time.LocalDate
@@ -85,6 +86,17 @@ data class DrinkForm(
         if (finishDate != null && finishTime != null) instant(finishDate, finishTime, zone)
         else null
 
+    /**
+     * [drink] with the servings, start, and finish typed here; the per-serving amounts and the zone
+     * are kept, the times are read in the drink's zone, and a fast drink finishes where it starts.
+     * Call only when [errors] is empty.
+     */
+    fun applyTo(drink: LoggedDrink): LoggedDrink {
+        val start = start(drink.zone)
+        val finish = if (drink.style == IntakeStyle.FAST) start else finish(drink.zone)
+        return drink.copy(servings = servingsValue(), start = start, finish = finish)
+    }
+
     private fun instant(date: LocalDate, time: LocalTime, zone: ZoneId): Instant =
         LocalDateTime.of(date, time).atZone(zone).toInstant()
 }
@@ -109,4 +121,10 @@ fun LoggedDrink.toForm(): DrinkForm {
         finishDate = finishLocal?.toLocalDate(),
         finishTime = finishLocal?.toLocalTime()?.truncatedTo(ChronoUnit.MINUTES),
     )
+}
+
+/** The form for editing this drink: a fast drink has no finish of its own to edit. */
+fun LoggedDrink.toEditForm(): DrinkForm {
+    val form = toForm()
+    return if (style == IntakeStyle.FAST) form.copy(finishDate = null, finishTime = null) else form
 }

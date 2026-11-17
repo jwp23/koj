@@ -50,19 +50,11 @@ fun LogDrinkScreen(model: LogDrinkViewModel, onDone: () -> Unit) {
         ) {
             Heading("Log ${state.source.name}")
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                val error =
-                    state.errors.firstOrNull {
-                        it == DrinkField.SERVINGS || it == DrinkField.SERVINGS_TOO_MANY
-                    }
-                OutlinedTextField(
-                    value = form.servings,
-                    onValueChange = { model.change(form.copy(servings = it)) },
-                    label = { Text("Servings") },
-                    isError = error != null,
-                    supportingText = error?.let { { Text(message(it)) } },
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-                    singleLine = true,
-                    modifier = Modifier.weight(1f),
+                ServingsField(
+                    form.servings,
+                    state.errors,
+                    onChange = { model.change(form.copy(servings = it)) },
+                    Modifier.weight(1f),
                 )
                 OutlinedButton(onClick = model::justASip) { Text("Just a sip") }
             }
@@ -79,7 +71,10 @@ fun LogDrinkScreen(model: LogDrinkViewModel, onDone: () -> Unit) {
                 )
             }
             if (DrinkField.START_IN_FUTURE in state.errors) {
-                Text(message(DrinkField.START_IN_FUTURE), color = MaterialTheme.colorScheme.error)
+                Text(
+                    drinkFieldMessage(DrinkField.START_IN_FUTURE),
+                    color = MaterialTheme.colorScheme.error,
+                )
             }
             state.amounts?.let {
                 Text(
@@ -94,8 +89,31 @@ fun LogDrinkScreen(model: LogDrinkViewModel, onDone: () -> Unit) {
     }
 }
 
+/** The servings text field, marked with what is wrong with it when [errors] says so. */
 @Composable
-private fun Heading(text: String) {
+internal fun ServingsField(
+    servings: String,
+    errors: Set<DrinkField>,
+    onChange: (String) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val error = errors.firstOrNull {
+        it == DrinkField.SERVINGS || it == DrinkField.SERVINGS_TOO_MANY
+    }
+    OutlinedTextField(
+        value = servings,
+        onValueChange = onChange,
+        label = { Text("Servings") },
+        isError = error != null,
+        supportingText = error?.let { { Text(drinkFieldMessage(it)) } },
+        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+        singleLine = true,
+        modifier = modifier,
+    )
+}
+
+@Composable
+internal fun Heading(text: String) {
     Text(
         text,
         style = MaterialTheme.typography.headlineMedium,
@@ -103,10 +121,13 @@ private fun Heading(text: String) {
     )
 }
 
-private fun message(field: DrinkField): String =
+internal fun drinkFieldMessage(field: DrinkField): String =
     when (field) {
         DrinkField.SERVINGS -> "Enter a number above 0"
         DrinkField.SERVINGS_TOO_MANY -> "Enter at most ${formatDecimal(MAX_SERVINGS)} servings"
         DrinkField.START_IN_FUTURE -> "The start cannot be in the future"
-        else -> error("The Log a drink screen has no $field")
+        DrinkField.FINISH_DATE -> "Choose a finish date"
+        DrinkField.FINISH_TIME -> "Choose a finish time"
+        DrinkField.FINISH_BEFORE_START -> "The finish cannot be before the start"
+        DrinkField.FINISH_IN_FUTURE -> "The finish cannot be in the future"
     }
