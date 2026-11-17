@@ -164,4 +164,67 @@ class DayGraphViewTest {
             .onNodeWithText("Taken: 130 mg caffeine, 20 mg L-theanine, ratio 0.15")
             .assertIsDisplayed()
     }
+
+    @Test
+    fun drinksStartingTogetherShareOneTargetThatShowsEveryDrink() {
+        val tea =
+            Source(
+                name = "Green tea",
+                caffeineMgPerServing = 30.0,
+                theanineMgPerServing = 0.0,
+                style = IntakeStyle.FAST,
+            )
+        val theanine =
+            Source(
+                name = "Theanine",
+                caffeineMgPerServing = 0.0,
+                theanineMgPerServing = 200.0,
+                style = IntakeStyle.FAST,
+            )
+        show(
+            drinks =
+                listOf(
+                    tea.logged(1.0, at("10:00"), zone).copy(id = 1),
+                    theanine.logged(1.0, at("10:00"), zone).copy(id = 2),
+                ),
+        )
+        composeRule.onNodeWithContentDescription("2 drinks at 10:00").performClick()
+        composeRule.onNodeWithText("Green tea").assertIsDisplayed()
+        composeRule.onNodeWithText("30 mg caffeine").assertIsDisplayed()
+        composeRule.onNodeWithText("Theanine").assertIsDisplayed()
+        composeRule.onNodeWithText("200 mg L-theanine").assertIsDisplayed()
+        composeRule.onNodeWithText("Close").performClick()
+        composeRule.onAllNodesWithText("Theanine").assertCountEquals(0)
+    }
+
+    @Test
+    fun checkInsAtTheSameTimeShareOneTargetThatShowsEveryRating() {
+        fun checkIn(id: Long, awake: Int, focus: Int, calm: Int) =
+            CheckIn(
+                id = id,
+                at = at("11:00"),
+                zone = zone,
+                awake = awake,
+                focus = focus,
+                calm = calm,
+                kind = PromptKind.FIXED_TIME,
+            )
+        show(checkIns = listOf(checkIn(1, 4, 3, 2), checkIn(2, 1, 5, 3)))
+        composeRule.onNodeWithContentDescription("2 check-ins at 11:00").performClick()
+        composeRule.onNodeWithText("Awake 4 · Focus 3 · Calm 2").assertIsDisplayed()
+        composeRule.onNodeWithText("Awake 1 · Focus 5 · Calm 3").assertIsDisplayed()
+        composeRule.onNodeWithText("Close").performClick()
+        composeRule.onAllNodesWithText("Awake 1 · Focus 5 · Calm 3").assertCountEquals(0)
+    }
+
+    @Test
+    fun aDrinkAloneAtItsTimeKeepsItsOwnTargetBesideAGroup() {
+        val mate = fastSource("Mate").logged(1.0, at("10:00"), zone).copy(id = 2)
+        val sencha = fastSource("Sencha").logged(1.0, at("10:00"), zone).copy(id = 3)
+        show(drinks = listOf(espressoAt("09:00"), mate, sencha))
+        composeRule.onNodeWithContentDescription("2 drinks at 10:00").assertIsDisplayed()
+        composeRule.onNodeWithContentDescription("Drink: Espresso at 09:00").performClick()
+        composeRule.onNodeWithText("Espresso").assertIsDisplayed()
+        composeRule.onAllNodesWithText("Mate").assertCountEquals(0)
+    }
 }

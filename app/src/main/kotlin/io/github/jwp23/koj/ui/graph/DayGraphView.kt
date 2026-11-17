@@ -40,10 +40,13 @@ import androidx.compose.ui.unit.dp
 import io.github.jwp23.koj.form.formatMg
 import io.github.jwp23.koj.form.formatRatio
 import io.github.jwp23.koj.form.formatTime
-import io.github.jwp23.koj.graph.CheckInMarker
+import io.github.jwp23.koj.graph.CheckInMoment
 import io.github.jwp23.koj.graph.DayGraph
 import io.github.jwp23.koj.graph.GraphPoint
 import io.github.jwp23.koj.graph.IntakeMarker
+import io.github.jwp23.koj.graph.IntakeMoment
+import io.github.jwp23.koj.graph.checkInMoments
+import io.github.jwp23.koj.graph.intakeMoments
 import io.github.jwp23.koj.intake.Amounts
 import java.time.Instant
 import java.time.ZoneId
@@ -74,8 +77,8 @@ fun DayGraphView(graph: DayGraph, zone: ZoneId, modifier: Modifier = Modifier) {
     val caffeineColor = MaterialTheme.colorScheme.primary
     val theanineColor = MaterialTheme.colorScheme.tertiary
     val baselineColor = MaterialTheme.colorScheme.outline
-    var openDrink by remember { mutableStateOf<IntakeMarker?>(null) }
-    var openCheckIn by remember { mutableStateOf<CheckInMarker?>(null) }
+    var openDrink by remember { mutableStateOf<IntakeMoment?>(null) }
+    var openCheckIn by remember { mutableStateOf<CheckInMoment?>(null) }
     Column(modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(4.dp)) {
         Row(
             horizontalArrangement = Arrangement.spacedBy(16.dp),
@@ -109,18 +112,18 @@ fun DayGraphView(graph: DayGraph, zone: ZoneId, modifier: Modifier = Modifier) {
                 drawAmountLine(graph, graph.projection, caffeineColor, dashes) { it.caffeineMg }
                 drawAmountLine(graph, graph.projection, theanineColor, dashes) { it.theanineMg }
             }
-            for (marker in graph.intakeMarkers) {
-                IntakeMarkerTarget(marker, graph, spanWidth, zone) { openDrink = marker }
+            for (moment in graph.intakeMarkers.intakeMoments()) {
+                IntakeMarkerTarget(moment, graph, spanWidth, zone) { openDrink = moment }
             }
-            for (marker in graph.checkInMarkers) {
+            for (moment in graph.checkInMarkers.checkInMoments()) {
                 CheckInMarkerTarget(
-                    marker,
+                    moment,
                     graph,
                     spanWidth,
                     zone,
                     Modifier.align(Alignment.BottomStart),
                 ) {
-                    openCheckIn = marker
+                    openCheckIn = moment
                 }
             }
         }
@@ -137,12 +140,13 @@ fun DayGraphView(graph: DayGraph, zone: ZoneId, modifier: Modifier = Modifier) {
 }
 
 /**
- * A drink's marker along the top of the box: a dot for a fast drink, a bar from start to end for a
- * sipped one, inside a touch target at least [TouchTarget] square.
+ * A moment's marker along the top of the box: a dot for a fast drink, a bar from start to end for a
+ * sipped one, inside a touch target at least [TouchTarget] square. Drinks that share the moment
+ * share the target.
  */
 @Composable
 private fun IntakeMarkerTarget(
-    marker: IntakeMarker,
+    moment: IntakeMoment,
     graph: DayGraph,
     spanWidth: Dp,
     zone: ZoneId,
@@ -150,14 +154,12 @@ private fun IntakeMarkerTarget(
 ) {
     val color = MaterialTheme.colorScheme.secondary
     Box(
-        Modifier.offset(x = spanWidth * graph.position(marker.start))
+        Modifier.offset(x = spanWidth * graph.position(moment.start))
             .size(
-                width = TouchTarget + spanWidth * graph.lengthBetween(marker.start, marker.end),
+                width = TouchTarget + spanWidth * graph.lengthBetween(moment.start, moment.end),
                 height = TouchTarget,
             )
-            .semantics {
-                contentDescription = "Drink: ${marker.sourceName} at ${marker.start.timeIn(zone)}"
-            }
+            .semantics { contentDescription = moment.description(zone) }
             .clickable(onClick = onOpen),
         contentAlignment = Alignment.Center,
     ) {
@@ -171,12 +173,12 @@ private fun IntakeMarkerTarget(
 }
 
 /**
- * A check-in's marker: a ring on the baseline, inside a touch target [TouchTarget] square whose
- * centre is on the baseline.
+ * A moment's check-in marker: a ring on the baseline, inside a touch target [TouchTarget] square
+ * whose centre is on the baseline. Check-ins at the same instant share the target.
  */
 @Composable
 private fun CheckInMarkerTarget(
-    marker: CheckInMarker,
+    moment: CheckInMoment,
     graph: DayGraph,
     spanWidth: Dp,
     zone: ZoneId,
@@ -186,9 +188,9 @@ private fun CheckInMarkerTarget(
     val color = MaterialTheme.colorScheme.onSurfaceVariant
     Box(
         modifier
-            .offset(x = spanWidth * graph.position(marker.at))
+            .offset(x = spanWidth * graph.position(moment.at))
             .size(TouchTarget)
-            .semantics { contentDescription = "Check-in at ${marker.at.timeIn(zone)}" }
+            .semantics { contentDescription = moment.description(zone) }
             .clickable(onClick = onOpen),
         contentAlignment = Alignment.Center,
     ) {
@@ -196,32 +198,53 @@ private fun CheckInMarkerTarget(
     }
 }
 
+/**
+ * What a screen reader says of the target: the drink itself when alone, else how many there are.
+ */
+private fun IntakeMoment.description(zone: ZoneId): String {
+    val time = start.timeIn(zone)
+    return markers.singleOrNull()?.let { "Drink: ${it.sourceName} at $time" }
+        ?: "${markers.size} drinks at $time"
+}
+
+private fun CheckInMoment.description(zone: ZoneId): String {
+    val time = at.timeIn(zone)
+    return if (markers.size == 1) "Check-in at $time" else "${markers.size} check-ins at $time"
+}
+
+/** One drink's details, one per line. */
+private fun IntakeMarker.detailLines(zone: ZoneId): List<String> {
+    val first = start.timeIn(zone)
+    return listOf(
+        if (end == start) first else "$first to ${end.timeIn(zone)}",
+        "${formatMg(taken.caffeineMg)} caffeine",
+        "${formatMg(taken.theanineMg)} L-theanine",
+        "Taken ratio: ${formatRatio(taken.theanineToCaffeineRatio)}",
+    )
+}
+
+/** A drink's details, or each drink's under its source name when several share the moment. */
 @Composable
-private fun DrinkDetails(marker: IntakeMarker, zone: ZoneId, onClose: () -> Unit) {
-    val start = marker.start.timeIn(zone)
-    val time = if (marker.end == marker.start) start else "$start to ${marker.end.timeIn(zone)}"
+private fun DrinkDetails(moment: IntakeMoment, zone: ZoneId, onClose: () -> Unit) {
+    val single = moment.markers.singleOrNull()
     Details(
-        title = marker.sourceName,
+        title = single?.sourceName ?: moment.description(zone),
         lines =
-            listOf(
-                time,
-                "${formatMg(marker.taken.caffeineMg)} caffeine",
-                "${formatMg(marker.taken.theanineMg)} L-theanine",
-                "Taken ratio: ${formatRatio(marker.taken.theanineToCaffeineRatio)}",
-            ),
+            if (single != null) single.detailLines(zone)
+            else moment.markers.flatMap { listOf(it.sourceName) + it.detailLines(zone) },
         onClose = onClose,
     )
 }
 
+/** A check-in's ratings, or each check-in's when several were made at the same instant. */
 @Composable
-private fun CheckInDetails(marker: CheckInMarker, zone: ZoneId, onClose: () -> Unit) {
+private fun CheckInDetails(moment: CheckInMoment, zone: ZoneId, onClose: () -> Unit) {
     Details(
-        title = "Check-in at ${marker.at.timeIn(zone)}",
+        title = moment.description(zone),
         lines =
-            listOf(
-                "Awake ${marker.awake.rating()} · Focus ${marker.focus.rating()} · " +
-                    "Calm ${marker.calm.rating()}",
-            ),
+            moment.markers.map {
+                "Awake ${it.awake.rating()} · Focus ${it.focus.rating()} · Calm ${it.calm.rating()}"
+            },
         onClose = onClose,
     )
 }
