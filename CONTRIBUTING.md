@@ -87,6 +87,19 @@ A technical choice is written down before it is implemented: an ADR in `docs/adr
 architecture and major libraries, a decision doc in `docs/decisions/` for tools, conventions, and
 configuration. See [docs/decision-recording.md](docs/decision-recording.md).
 
+## Releasing
+
+The maintainer makes a release by pushing a tag `vMAJOR.MINOR.PATCH` on a commit of `main`, for
+example `git tag v0.2.0 && git push origin v0.2.0`. MINOR and PATCH run from 0 to 99.
+
+The Release workflow builds, tests, signs, and publishes `koj-<version>.apk` as a GitHub Release.
+Obtainium on the phone installs and updates the app from those releases. Each tag must be higher
+than the last, because Android refuses an update with a lower version code.
+
+The signing key is held in the `release` environment's secrets and in an offline copy. It is never
+committed. Losing it means the app can no longer be updated in place. The reasons for these
+choices are in [docs/decisions/release-versioning-and-signing.md](docs/decisions/release-versioning-and-signing.md).
+
 ## Commits and Pull Requests
 
 - Never commit to `main`. Work on a branch named `feat/`, `fix/`, `chore/`, `docs/`,

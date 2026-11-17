@@ -17,14 +17,31 @@ android {
         applicationId = "io.github.jwp23.koj"
         minSdk = libs.versions.minSdk.get().toInt()
         targetSdk = libs.versions.targetSdk.get().toInt()
-        versionCode = 1
-        versionName = "0.1.0"
+        versionCode = providers.gradleProperty("koj.versionCode").map { it.toInt() }.getOrElse(1)
+        versionName = providers.gradleProperty("koj.versionName").getOrElse("0.1.0")
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+    }
+
+    // The release key exists only in CI secrets and an offline copy. A build without these
+    // variables, or only some of them, produces an unsigned release APK, which cannot be installed.
+    val signingVariables =
+        listOf("KOJ_KEYSTORE_FILE", "KOJ_KEYSTORE_PASSWORD", "KOJ_KEY_ALIAS", "KOJ_KEY_PASSWORD")
+            .associateWith { providers.environmentVariable(it) }
+    if (signingVariables.values.all { it.isPresent }) {
+        signingConfigs {
+            create("release") {
+                storeFile = file(signingVariables.getValue("KOJ_KEYSTORE_FILE").get())
+                storePassword = signingVariables.getValue("KOJ_KEYSTORE_PASSWORD").get()
+                keyAlias = signingVariables.getValue("KOJ_KEY_ALIAS").get()
+                keyPassword = signingVariables.getValue("KOJ_KEY_PASSWORD").get()
+            }
+        }
     }
 
     buildTypes {
         debug { enableAndroidTestCoverage = true }
         release {
+            signingConfig = signingConfigs.findByName("release")
             isMinifyEnabled = true
             isShrinkResources = true
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"))

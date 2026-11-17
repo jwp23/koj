@@ -4,14 +4,12 @@ Decision: A release is made by pushing a tag `vMAJOR.MINOR.PATCH`. The release w
 the version from the tag: the version name is the tag without the `v`, and the version code is
 `MAJOR * 10000 + MINOR * 100 + PATCH`, so minor and patch stop at 99. The workflow passes both to
 Gradle as the properties `koj.versionName` and `koj.versionCode`. Each release carries exactly
-one APK. The build does not do this yet: `app/build.gradle.kts` still sets the version as literals, and
-the release workflow is not written.
+one APK.
 
 The build signs the release APK when the environment variables `KOJ_KEYSTORE_FILE`,
 `KOJ_KEYSTORE_PASSWORD`, `KOJ_KEY_ALIAS`, and `KOJ_KEY_PASSWORD` are set, and leaves it unsigned
 otherwise. In CI they come from secrets of a GitHub environment named `release` that only `v*`
-tags may deploy to. The maintainer generates the key and keeps the only other copy offline. The
-build does not read these variables yet.
+tags may deploy to. The maintainer generates the key and keeps the only other copy offline.
 
 Rationale: Obtainium takes a release's version from its tag and compares it with the installed
 app's version name, so the two must agree; deriving both from the tag makes disagreement
