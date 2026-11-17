@@ -120,7 +120,7 @@ fun KojApp(container: AppContainer) {
                                             }
                                         },
                                 ),
-                                onDone = { backStack.removeLastOrNull() },
+                                onDone = { backStack.removeIfOnTop(key) },
                             )
                         }
                         entry<EditCheckIn> { key ->
@@ -136,7 +136,7 @@ fun KojApp(container: AppContainer) {
                                             }
                                         },
                                 ),
-                                onDone = { backStack.removeLastOrNull() },
+                                onDone = { backStack.removeIfOnTop(key) },
                             )
                         }
                         entry<Sources> {
