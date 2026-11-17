@@ -130,6 +130,8 @@ the block below directs, and never open a GitHub issue for it. That covers bugs 
 working, follow-ups, and review findings deferred out of a pull request: each becomes a bead. When
 the work answers a contributor's GitHub issue, name the issue number in the bead and in the pull
 request.
+Beads live in the local Dolt database, so when a session creates beads its handoff lists their
+IDs and says whether `bd dolt push` ran.
 
 <!-- BEGIN BEADS INTEGRATION v:1 profile:minimal hash:1105d646 -->
 ## Beads Issue Tracker
